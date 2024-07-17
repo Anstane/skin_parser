@@ -9,6 +9,9 @@ class EnvSettings(BaseSettings):
     # Database.
     DATABASE_NAME: str
 
+    # Lis skins URL.
+    LIS_URL: str
+
     class Config:
         env_file = "../.env"
         env_file_encoding = "utf-8"
