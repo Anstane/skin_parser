@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "skin-parser"
+version = "0.1.0"
+description = "Web parser on Python."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+beautifulsoup4 = "^4.12.3"
+httpx = "^0.27.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
