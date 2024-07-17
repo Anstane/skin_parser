@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from core import db_settings
+from core.config import db_settings
 
 
 class DBSessionManager:
@@ -30,7 +30,7 @@ class DBSessionManager:
             raise Exception("Engine is None.")
         await self._engine.dispose()
         self._engine = None
-        self._sessionmaker = None
+        self._session_factory = None
 
     @contextlib.asynccontextmanager
     async def connection(self) -> AsyncIterator[AsyncConnection]:

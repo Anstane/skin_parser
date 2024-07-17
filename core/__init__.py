@@ -3,5 +3,5 @@ __all__ = (
     "get_environment_variables",
 )
 
-from .db_config import db_settings
+from .config import db_settings
 from .env import get_environment_variables
