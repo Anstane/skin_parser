@@ -1,6 +1,6 @@
 venv
 .venv
-migrations/versions
 *.pyc
 .env
 .vscode
+database.db
