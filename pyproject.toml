@@ -8,42 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 sqlalchemy = {extras = ["aiosqlite"], version = "^2.0.31"}
-httpx = {extras = ["cli"], version = "^0.27.0"}
-beautifulsoup4 = "^4.12.3"
 pydantic = "^2.8.2"
 pydantic-settings = "^2.3.4"
 alembic = "^1.13.2"
-cloudscraper = "^1.2.71"
-
-[tool.poetry.group.linters.dependencies]
-ruff = "^0.5.2"
-black = "^24.4.2"
-
-[tool.ruff]
-target-version = "py311"
-exclude = [
-    ".git",
-    ".vscode",
-    ".ruff_cache",
-    "__pycache__",
-    "site-packages",
-    ".venv",
-    "venv",
-    "alembic",
-]
-line-length = 88
-indent-width = 4
-
-[tool.ruff.lint]
-select = [
-  "E",  # PEP8.
-  "W",  # Варнинги.
-  "F",  # Импорт модулей.
-  "I",  # Порядок импорта.
-  "N",  # Нейминг.
-]
-ignore = []
-
+httpx = "^0.28.1"
 
 [build-system]
 requires = ["poetry-core"]
