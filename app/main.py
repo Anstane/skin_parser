@@ -1,6 +1,6 @@
 import asyncio
 
-from app.telegram.dispatchers import dp
+from app.lis.dispatchers import dp
 from app.telegram.bot_config import bot
 
 
