@@ -226,26 +226,29 @@ async def send_first_skins(message: Message, skins: list) -> None:
             f"🎯 <b>{skin['name']}</b>\n" f"💰 <b>Цена:</b> {skin['price']} USD\n"
         )
 
+        paint_seed = skin.get("item_paint_seed")
+        if paint_seed:
+            skin_text += f"🎲 <b>Paint Seed:</b> {skin['item_paint_seed']}\n"
+
         item_float = skin.get("item_float")
         if item_float is not None:
             skin_text += f"🌡️ <b>Float:</b> {float(item_float):.6f}\n"
 
-        skin_text += (
-            f"🎲 <b>Paint Seed:</b> {skin['item_paint_seed']}\n"
-            f"📅 <b>Добавлен:</b> {skin['created_at'][:10]} {skin['created_at'][11:19]}"
-        )
-
         if skin.get("unlock_at"):
-            skin_text += f"\n🔓 <b>Разблокируется:</b> {skin['unlock_at'][:10]} {skin['unlock_at'][11:19]}"
+            skin_text += f"🔓 <b>Разблокируется:</b> {skin['unlock_at'][:10]} {skin['unlock_at'][11:19]}\n"
+        else:
+            skin_text += f"🔓 <b>Предмет разблокирован!</b>\n"
+
+        skin_text += f"📅 <b>Добавлен:</b> {skin['created_at'][:10]} {skin['created_at'][11:19]}\n"
 
         if skin.get("name_tag"):
-            skin_text += f"\n🏷️ <b>Name Tag:</b> {skin['name_tag']}"
+            skin_text += f"🏷️ <b>Name Tag:</b> {skin['name_tag']}"
 
         if skin.get("stickers"):
             stickers_list = "\n".join(
                 [f"— {sticker['name']}" for sticker in skin["stickers"]]
             )
-            skin_text += f"\n\n🎟️ <b>Стикеры:</b>\n{stickers_list}"
+            skin_text += f"\n🎟️ <b>Стикеры:</b>\n{stickers_list}"
 
         full_message += skin_text.strip()
 
