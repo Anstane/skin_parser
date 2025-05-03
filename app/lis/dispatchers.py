@@ -240,6 +240,7 @@ async def lis_parse(message: Message, state: FSMContext) -> None:
             if existed_items:
                 item_list = "\n".join(f"• {item.skin_name}" for item in existed_items)
                 await message.answer(
+                    "⛔️ Парс в данный момент неактивен.\n\n"
                     f"🔎 У вас уже добавлены предметы для парса:\n\n{item_list}\n\n"
                     "Что вы хотите сделать?",
                     reply_markup=start_parse_kb,

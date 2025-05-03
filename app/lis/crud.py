@@ -22,13 +22,13 @@ async def add_lis_auth(user_id: int, token: str) -> AuthLis:
 
 async def get_user_parse_model(tg_id: int) -> ActiveParse | None:
     async for session in db_helper.get_async_session():
-        stmt = select(ActiveParse).where(tg_id=tg_id)
+        stmt = select(ActiveParse).where(ActiveParse.tg_id == tg_id)
 
         return await session.scalar(statement=stmt)
 
 
 async def get_items_by_tg_id(tg_id: int) -> list[SkinToParse]:
     async for session in db_helper.get_async_session():
-        stmt = select(SkinToParse).where(tg_id=tg_id)
+        stmt = select(SkinToParse).where(SkinToParse.tg_id == tg_id)
 
         return await session.scalars(statement=stmt)
