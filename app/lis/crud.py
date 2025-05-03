@@ -31,4 +31,5 @@ async def get_items_by_tg_id(tg_id: int) -> list[SkinToParse]:
     async for session in db_helper.get_async_session():
         stmt = select(SkinToParse).where(SkinToParse.tg_id == tg_id)
 
-        return await session.scalars(statement=stmt)
+        result = await session.execute(statement=stmt)
+        return result.all()

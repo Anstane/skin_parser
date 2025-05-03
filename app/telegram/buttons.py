@@ -19,6 +19,7 @@ parse_action_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="➕ Добавить предметы")],
         [KeyboardButton(text="🛑 Остановить парс")],
+        [KeyboardButton(text="❌ Ничего")],
     ],
     resize_keyboard=True,
     one_time_keyboard=True,
