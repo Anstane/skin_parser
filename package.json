@@ -1,0 +1,24 @@
+{
+  "name": "skin_parser",
+  "version": "1.0.0",
+  "description": "Парсим скины с хорошим качеством.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anstane/skin_parser.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anstane/skin_parser/issues"
+  },
+  "homepage": "https://github.com/Anstane/skin_parser#readme",
+  "dependencies": {
+    "centrifuge": "^5.3.4",
+    "readline": "^1.3.0",
+    "ws": "^8.18.1"
+  }
+}

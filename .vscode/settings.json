@@ -6,10 +6,5 @@
         },
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "ruff.lint.args": [
-        "--config=pyproject.toml"
-    ],
-    "ruff.fixAll": true,
-    "ruff.organizeImports": true,
     "editor.formatOnSave": true,
 }
