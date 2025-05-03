@@ -234,6 +234,14 @@ async def lis_parse(message: Message, state: FSMContext) -> None:
         active_parse_model = await lis_crud.get_user_parse_model(tg_id=tg_id)
 
         if active_parse_model:
+            if active_parse_model.is_active:
+                await message.answer(
+                    "Парс уже активен. Хотите добавить предметы или остановить парсинг?"
+                )
+
+            else:
+
+                await message.answer("")
 
         else:
             await message.answer("Хотите начать парсинг предметов?")
