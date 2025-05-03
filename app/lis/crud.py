@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from app.db import db_helper, AuthLis, ActiveParse
+from app.db import db_helper, AuthLis, ActiveParse, SkinToParse
 
 
 async def check_exist_user_or_not(tg_id: int) -> AuthLis | None:
@@ -25,3 +25,10 @@ async def get_user_parse_model(tg_id: int) -> ActiveParse | None:
         stmt = select(ActiveParse).where(tg_id=tg_id)
 
         return await session.scalar(statement=stmt)
+
+
+async def get_items_by_tg_id(tg_id: int) -> list[SkinToParse]:
+    async for session in db_helper.get_async_session():
+        stmt = select(SkinToParse).where(tg_id=tg_id)
+
+        return await session.scalars(statement=stmt)

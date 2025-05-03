@@ -4,34 +4,21 @@ from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 
-from app.telegram.buttons import skip_keyboard
+from app.telegram.buttons import (
+    skip_keyboard,
+    yes_no_kb,
+    parse_action_kb,
+    start_parse_kb,
+)
 
+from app.lis.states import AuthStates, SearchForSkinStates, ParseStates
 from app.lis.constants import SKIN_NAME_INPUT_PROMPT, JSON_SEARCH_PROMPT
 from app.lis.service import get_user_balance, send_request_for_skins
 from app.lis.utils import send_first_skins
 from app.lis import crud as lis_crud
 
 dp = Dispatcher()
-
-MAX_MESSAGE_LENGTH = 4096
-
-
-class AuthStates(StatesGroup):
-    waiting_for_token = State()
-
-
-class SearchForSkinStates(StatesGroup):
-    lis_token = State()
-    waiting_for_skin_name = State()
-    waiting_for_optional_search_params = State()
-
-
-class ParseForm(StatesGroup):
-    waiting_for_item_name = State()
-    waiting_for_optional_data = State()
-    confirm_more_items = State()
 
 
 @dp.message(Command("lis_auth"))
@@ -230,23 +217,38 @@ async def lis_parse(message: Message, state: FSMContext) -> None:
 
     user_exists = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
 
-    if user_exists:
-        active_parse_model = await lis_crud.get_user_parse_model(tg_id=tg_id)
-
-        if active_parse_model:
-            if active_parse_model.is_active:
-                await message.answer(
-                    "Парс уже активен. Хотите добавить предметы или остановить парсинг?"
-                )
-
-            else:
-
-                await message.answer("")
-
-        else:
-            await message.answer("Хотите начать парсинг предметов?")
-
-    else:
+    if not user_exists:
         await message.answer(
             "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
         )
+        return
+
+    active_parse_model = await lis_crud.get_user_parse_model(tg_id=tg_id)
+
+    if active_parse_model:
+        if active_parse_model.is_active:
+            await message.answer(
+                "🟢 Парс уже активен. Хотите добавить предметы или остановить парсинг?",
+                reply_markup=parse_action_kb,
+            )
+            await state.set_state(ParseStates.active_parse_action)
+            return
+
+        else:
+            existed_items = await lis_crud.get_items_by_tg_id(tg_id=tg_id)
+
+            if existed_items:
+                item_list = "\n".join(f"• {item.skin_name}" for item in existed_items)
+                await message.answer(
+                    f"🔎 У вас уже добавлены предметы для парса:\n\n{item_list}\n\n"
+                    "Что вы хотите сделать?",
+                    reply_markup=start_parse_kb,
+                )
+                await state.set_state(ParseStates.confirm_start_parse)
+                return
+
+    await message.answer(
+        "Хотите начать парсинг предметов?",
+        reply_markup=yes_no_kb,
+    )
+    await state.set_state(ParseStates.ask_to_start_first_parse)

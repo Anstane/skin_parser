@@ -99,8 +99,7 @@ async def run_node_listener(lis_token: str) -> None:
 
 
 async def main():
-    lis_token = "d3135d82-d03d-4f76-b702-c75572b7b51a"
-    token = await fetch_ws_token(lis_token)
+    token = await fetch_ws_token()
 
     await run_node_listener(token)
 
