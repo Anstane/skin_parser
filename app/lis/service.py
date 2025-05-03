@@ -1,3 +1,6 @@
+import json
+import asyncio
+
 import httpx
 
 
@@ -47,3 +50,60 @@ async def send_request_for_skins(data: dict, lis_token: str) -> dict:
             headers=headers,
         )
         return response.json()
+
+
+async def fetch_ws_token(lis_token: str) -> str:
+    url = "https://api.lis-skins.com/v1/user/get-ws-token"
+
+    headers = {"Authorization": f"Bearer {lis_token}"}
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url=url, headers=headers)
+        return response.json()["data"]["token"]
+
+
+async def run_node_listener(lis_token: str) -> None:
+    process = await asyncio.create_subprocess_exec(
+        "node",
+        "client.js",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    process.stdin.write((lis_token + "\n").encode())
+    await process.stdin.drain()
+
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+
+        decoded_line = line.decode("utf-8").strip()
+
+        if not decoded_line:
+            continue
+
+        try:
+            event_data = json.loads(decoded_line)
+
+            item_name = event_data.get("name")
+            print(item_name)
+            if item_name == "Revolution Case":
+                print("💎 Получен нужный предмет: Revolution Case!")
+
+        except json.JSONDecodeError as e:
+            print(f"❌ Ошибка декодирования JSON: {e}")
+
+    await process.wait()
+
+
+async def main():
+    lis_token = "d3135d82-d03d-4f76-b702-c75572b7b51a"
+    token = await fetch_ws_token(lis_token)
+
+    await run_node_listener(token)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

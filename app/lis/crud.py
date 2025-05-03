@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from app.db import db_helper, AuthLis
+from app.db import db_helper, AuthLis, ActiveParse
 
 
 async def check_exist_user_or_not(tg_id: int) -> AuthLis | None:
@@ -18,3 +18,10 @@ async def add_lis_auth(user_id: int, token: str) -> AuthLis:
         await session.commit()
 
         return new_auth
+
+
+async def get_user_parse_model(tg_id: int) -> ActiveParse | None:
+    async for session in db_helper.get_async_session():
+        stmt = select(ActiveParse).where(tg_id=tg_id)
+
+        return await session.scalar(statement=stmt)

@@ -28,6 +28,12 @@ class SearchForSkinStates(StatesGroup):
     waiting_for_optional_search_params = State()
 
 
+class ParseForm(StatesGroup):
+    waiting_for_item_name = State()
+    waiting_for_optional_data = State()
+    confirm_more_items = State()
+
+
 @dp.message(Command("lis_auth"))
 async def handle_lis_auth(message: Message, state: FSMContext) -> None:
     user_id = message.from_user.id
@@ -216,3 +222,23 @@ async def get_optional_params_and_search(message: Message, state: FSMContext) ->
         return
 
     await send_first_skins(message=message, skins=skins)
+
+
+@dp.message(Command("lis_parse"))
+async def lis_parse(message: Message, state: FSMContext) -> None:
+    tg_id = message.from_user.id
+
+    user_exists = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    if user_exists:
+        active_parse_model = await lis_crud.get_user_parse_model(tg_id=tg_id)
+
+        if active_parse_model:
+
+        else:
+            await message.answer("Хотите начать парсинг предметов?")
+
+    else:
+        await message.answer(
+            "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
+        )
