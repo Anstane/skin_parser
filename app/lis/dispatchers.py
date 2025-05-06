@@ -15,6 +15,7 @@ from app.telegram.buttons import (
 from app.lis.states import AuthStates, SearchForSkinStates, ParseStates
 from app.lis.constants import SKIN_NAME_INPUT_PROMPT, JSON_SEARCH_PROMPT
 from app.lis.service import get_user_balance, send_request_for_skins
+from app.lis.factory import handle_start_parse
 from app.lis.utils import send_first_skins
 from app.lis import crud as lis_crud
 
@@ -253,3 +254,85 @@ async def lis_parse(message: Message, state: FSMContext) -> None:
         reply_markup=yes_no_kb,
     )
     await state.set_state(ParseStates.ask_to_start_first_parse)
+
+
+@dp.message(ParseStates.ask_to_start_first_parse)
+async def on_first_parse_start(message: Message, state: FSMContext):
+    text = message.text.strip()
+
+    if text == "✅ Да":
+        await message.answer("🔍 Введите название предмета, который вы хотите парсить:")
+        await state.set_state(ParseStates.add_item_name)
+
+    elif text == "❌ Нет":
+        await message.answer("❌ Отменено.")
+        await state.clear()
+
+
+@dp.message(ParseStates.add_item_name)
+async def on_item_name(message: Message, state: FSMContext):
+    skin_name = message.text.strip()
+
+    await state.update_data(skin_name=skin_name)
+
+    await message.answer(
+        "🎯 Укажите float (например: `>0.15`, `<0.05`, или оставьте пустым):"
+    )
+
+    await state.set_state(ParseStates.add_item_float)
+
+
+@dp.message(ParseStates.add_item_float)
+async def on_item_float(message: Message, state: FSMContext):
+    float_input = message.text.strip()
+
+    await state.update_data(float=float_input if float_input else None)
+
+    await message.answer(
+        "🎨 Введите список паттернов (через запятую), или оставьте пустым:"
+    )
+
+    await state.set_state(ParseStates.add_item_patterns)
+
+
+@dp.message(ParseStates.add_item_patterns)
+async def on_item_patterns(message: Message, state: FSMContext):
+    patterns_input = message.text.strip()
+
+    patterns = (
+        [p.strip() for p in patterns_input.split(",") if p.strip()]
+        if patterns_input
+        else []
+    )
+
+    data = await state.get_data()
+
+    await lis_crud.add_item_to_parse(
+        tg_id=message.from_user.id,
+        skin_name=data["skin_name"],
+        float=data["float"],
+        patterns=patterns,
+    )
+
+    await message.answer(
+        "✅ Предмет добавлен. Хотите добавить ещё один?", reply_markup=yes_no_kb
+    )
+
+    await state.set_state(ParseStates.confirm_add_another)
+
+
+@dp.message(ParseStates.confirm_add_another)
+async def on_confirm_add_another(message: Message, state: FSMContext):
+    text = message.text.strip()
+    tg_id = message.from_user.id
+
+    if text == "✅ Да":
+        await message.answer("🔍 Введите название следующего предмета:")
+        await state.set_state(ParseStates.add_item_name)
+
+    elif text == "❌ Нет":
+        await message.answer("⚡️ Начинаем парсинг...")
+
+        tg_id = message.from_user.id
+
+        await handle_start_parse(tg_id=tg_id)

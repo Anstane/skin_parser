@@ -3,6 +3,9 @@ import asyncio
 
 import httpx
 
+from app.lis.schemas import ItemConditionsSchema
+from app.lis.utils import check_item_against_conditions
+
 
 async def get_user_balance(lis_token: str) -> dict:
     url = "https://api.lis-skins.com/v1/user/balance"
@@ -62,16 +65,16 @@ async def fetch_ws_token(lis_token: str) -> str:
         return response.json()["data"]["token"]
 
 
-async def run_node_listener(lis_token: str) -> None:
+async def run_node_listener(ws_token: str, conditions: ItemConditionsSchema) -> None:
     process = await asyncio.create_subprocess_exec(
         "node",
-        "client.js",
+        "C:/Dev/MyDev/skin_parser/app/lis/js_client/client.js",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
 
-    process.stdin.write((lis_token + "\n").encode())
+    process.stdin.write((ws_token + "\n").encode())
     await process.stdin.drain()
 
     while True:
@@ -80,29 +83,16 @@ async def run_node_listener(lis_token: str) -> None:
             break
 
         decoded_line = line.decode("utf-8").strip()
-
         if not decoded_line:
             continue
 
         try:
             event_data = json.loads(decoded_line)
 
-            item_name = event_data.get("name")
-            print(item_name)
-            if item_name == "Revolution Case":
-                print("💎 Получен нужный предмет: Revolution Case!")
+            if check_item_against_conditions(event_data, conditions.items):
+                print("💎 Найден подходящий айтем:", event_data)
 
         except json.JSONDecodeError as e:
             print(f"❌ Ошибка декодирования JSON: {e}")
 
     await process.wait()
-
-
-async def main():
-    token = await fetch_ws_token()
-
-    await run_node_listener(token)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

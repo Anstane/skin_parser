@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from sqlalchemy import select, insert, update
+
+from app.lis.schemas import ItemConditionsSchema, ConditionSchema
 
 from app.db import db_helper, AuthLis, ActiveParse, SkinToParse
 
@@ -33,3 +35,65 @@ async def get_items_by_tg_id(tg_id: int) -> list[SkinToParse]:
 
         result = await session.execute(statement=stmt)
         return result.all()
+
+
+async def set_parse_status(tg_id: int, active: bool):
+    async for session in db_helper.get_async_session():
+        result = await session.execute(
+            select(ActiveParse).where(ActiveParse.tg_id == tg_id)
+        )
+        row = result.scalar_one_or_none()
+
+        if row:
+            await session.execute(
+                update(ActiveParse)
+                .where(ActiveParse.tg_id == tg_id)
+                .values(is_active=active)
+            )
+        else:
+            await session.execute(
+                insert(ActiveParse).values(tg_id=tg_id, is_active=active)
+            )
+
+        await session.commit()
+
+
+async def get_conditions_for_user(tg_id: int) -> ItemConditionsSchema:
+    async for session in db_helper.get_async_session():
+        result = await session.execute(
+            select(SkinToParse).where(SkinToParse.tg_id == tg_id)
+        )
+        rows = result.scalars().all()
+
+        conditions = [
+            ConditionSchema(
+                skin_name=row.skin_name,
+                patterns=row.patterns.split(",") if row.patterns else [],
+                float_condition=row.float,
+            )
+            for row in rows
+        ]
+
+        return ItemConditionsSchema(items=conditions)
+
+
+async def add_item_to_parse(
+    tg_id: int,
+    skin_name: str,
+    patterns: list[str],
+    float: str | None = None,
+) -> None:
+    patterns_str = (
+        ",".join([p.strip() for p in patterns if p.strip()]) if patterns else None
+    )
+
+    async for session in db_helper.get_async_session():
+        item = SkinToParse(
+            tg_id=tg_id,
+            skin_name=skin_name,
+            patterns=patterns_str,
+            float=float,
+        )
+
+        session.add(item)
+        await session.commit()
