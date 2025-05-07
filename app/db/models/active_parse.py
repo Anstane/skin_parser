@@ -11,7 +11,5 @@ class ActiveParse(Base):
         autoincrement=True,
         unique=True,
     )
-    tg_id: Mapped[int] = mapped_column(
-        unique=True,
-    )
+    tg_id: Mapped[int] = mapped_column(unique=True)
     is_active: Mapped[bool] = mapped_column(default=False)

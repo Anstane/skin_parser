@@ -12,20 +12,38 @@ from app.telegram.buttons import (
     start_parse_kb,
 )
 
-from app.lis.states import AuthStates, SearchForSkinStates, ParseStates
-from app.lis.constants import SKIN_NAME_INPUT_PROMPT, JSON_SEARCH_PROMPT
-from app.lis.service import get_user_balance, send_request_for_skins
-from app.lis.factory import handle_start_parse
+from app.lis.states import (
+    AuthStates,
+    SearchForSkinStates,
+    ParseStates,
+)
+from app.lis.constants import (
+    SKIN_NAME_INPUT_PROMPT,
+    JSON_SEARCH_PROMPT,
+)
+from app.lis.service import (
+    get_user_balance,
+    send_request_for_skins,
+)
+from app.lis.factory import (
+    handle_start_parse,
+    handle_stop_parse,
+)
 from app.lis.utils import send_first_skins
+
 from app.lis import crud as lis_crud
 
 dp = Dispatcher()
 
 
+####################
+##### lis_auth #####
+####################
+
+
 @dp.message(Command("lis_auth"))
 async def handle_lis_auth(message: Message, state: FSMContext) -> None:
     user_id = message.from_user.id
-
     user_exists = await lis_crud.check_exist_user_or_not(tg_id=user_id)
 
     if user_exists:
@@ -33,7 +51,6 @@ async def handle_lis_auth(message: Message, state: FSMContext) -> None:
 
     else:
         await message.answer("🔑 Отправьте, пожалуйста, ваш LIS токен.")
-
         await state.set_state(AuthStates.waiting_for_token)
 
 
@@ -41,7 +58,6 @@ async def handle_lis_auth(message: Message, state: FSMContext) -> None:
 async def process_token(message: Message, state: FSMContext) -> None:
     token = message.text
     user_id = message.from_user.id
-
     auth_model = await lis_crud.add_lis_auth(user_id=user_id, token=token)
 
     if auth_model:
@@ -53,26 +69,33 @@ async def process_token(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
+#####################
+#### lis_balance ####
+#####################
+
+
 @dp.message(Command("lis_balance"))
 async def check_lis_balance(message: Message) -> None:
     user_id = message.from_user.id
-
     user_exists = await lis_crud.check_exist_user_or_not(tg_id=user_id)
 
-    if user_exists:
-        balance_data = await get_user_balance(lis_token=user_exists.lis_token)
-
-        if "balance" in balance_data:
-            balance = balance_data["balance"]
-            await message.answer(f"💰 Ваш баланс: {balance}")
-
-        else:
-            await message.answer("❌ Не удалось получить баланс. Попробуйте позже.")
-
-    else:
+    if not user_exists:
         await message.answer(
             "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
         )
+
+    balance_data = await get_user_balance(lis_token=user_exists.lis_token)
+
+    if "balance" in balance_data:
+        await message.answer(f"💰 Ваш баланс: {balance_data['balance']}")
+
+    else:
+        await message.answer("❌ Не удалось получить баланс. Попробуйте позже.")
+
+
+######################
+##### lis_search #####
+######################
 
 
 @dp.message(Command("lis_search"))
@@ -80,21 +103,20 @@ async def get_skins_available_for_purchase(message: Message, state: FSMContext) 
     user_id = message.from_user.id
     user_exists = await lis_crud.check_exist_user_or_not(tg_id=user_id)
 
-    if user_exists:
-        await state.update_data(lis_token=user_exists.lis_token)
-
-        await message.answer(
-            SKIN_NAME_INPUT_PROMPT,
-            reply_markup=skip_keyboard,
-            parse_mode="HTML",
-        )
-
-        await state.set_state(SearchForSkinStates.waiting_for_skin_name)
-
-    else:
+    if not user_exists:
         await message.answer(
             "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
         )
+
+    await state.update_data(lis_token=user_exists.lis_token)
+
+    await message.answer(
+        SKIN_NAME_INPUT_PROMPT,
+        reply_markup=skip_keyboard,
+        parse_mode="HTML",
+    )
+
+    await state.set_state(SearchForSkinStates.waiting_for_skin_name)
 
 
 @dp.message(SearchForSkinStates.waiting_for_skin_name)
@@ -212,6 +234,11 @@ async def get_optional_params_and_search(message: Message, state: FSMContext) ->
     await send_first_skins(message=message, skins=skins)
 
 
+#####################
+##### lis_parse #####
+#####################
+
+
 @dp.message(Command("lis_parse"))
 async def lis_parse(message: Message, state: FSMContext) -> None:
     tg_id = message.from_user.id
@@ -229,7 +256,7 @@ async def lis_parse(message: Message, state: FSMContext) -> None:
     if active_parse_model:
         if active_parse_model.is_active:
             await message.answer(
-                "🟢 Парс уже активен. Хотите добавить предметы или остановить парсинг?",
+                "🟢 Парс уже активен. Хотите отредактировать предметы или остановить парсинг?",
                 reply_markup=parse_action_kb,
             )
             await state.set_state(ParseStates.active_parse_action)
@@ -262,10 +289,12 @@ async def on_first_parse_start(message: Message, state: FSMContext):
 
     if text == "✅ Да":
         await message.answer("🔍 Введите название предмета, который вы хотите парсить:")
+
         await state.set_state(ParseStates.add_item_name)
 
     elif text == "❌ Нет":
         await message.answer("❌ Отменено.")
+
         await state.clear()
 
 
@@ -276,7 +305,12 @@ async def on_item_name(message: Message, state: FSMContext):
     await state.update_data(skin_name=skin_name)
 
     await message.answer(
-        "🎯 Укажите float (например: `>0.15`, `<0.05`, или оставьте пустым):"
+        "<b>📏 Укажите желаемый float предмета:</b>\n\n"
+        "🧮 <i>Примеры:</i>\n"
+        "• <code>&gt;0.15</code> — больше 0.15\n"
+        "• <code>&lt;0.05</code> — меньше 0.05\n\n"
+        "❗ <i>Если float не важен — отправьте</i> <code>-</code>",
+        parse_mode="HTML",
     )
 
     await state.set_state(ParseStates.add_item_float)
@@ -286,10 +320,17 @@ async def on_item_name(message: Message, state: FSMContext):
 async def on_item_float(message: Message, state: FSMContext):
     float_input = message.text.strip()
 
-    await state.update_data(float=float_input if float_input else None)
+    float_condition = None
+    if float_input and float_input not in {"-", "нет", "Нет"}:
+        float_condition = float_input
+
+    await state.update_data(float=float_condition)
 
     await message.answer(
-        "🎨 Введите список паттернов (через запятую), или оставьте пустым:"
+        "<b>🎨 Введите список pattern ID через запятую:</b>\n\n"
+        "🔢 <i>Пример:</i> <code>123, 456, 789</code>\n\n"
+        "❗ <i>Если паттерн не важен — отправьте</i> <code>-</code>",
+        parse_mode="HTML",
     )
 
     await state.set_state(ParseStates.add_item_patterns)
@@ -299,26 +340,26 @@ async def on_item_float(message: Message, state: FSMContext):
 async def on_item_patterns(message: Message, state: FSMContext):
     patterns_input = message.text.strip()
 
-    patterns = (
-        [p.strip() for p in patterns_input.split(",") if p.strip()]
-        if patterns_input
-        else []
-    )
+    patterns = []
+    if patterns_input.lower() not in {"-", "нет", "Нет"}:
+        patterns = [p.strip() for p in patterns_input.split(",") if p.strip()]
 
     data = await state.get_data()
 
-    await lis_crud.add_item_to_parse(
+    success, response_msg = await lis_crud.add_item_to_parse(
         tg_id=message.from_user.id,
         skin_name=data["skin_name"],
         float=data["float"],
         patterns=patterns,
     )
 
-    await message.answer(
-        "✅ Предмет добавлен. Хотите добавить ещё один?", reply_markup=yes_no_kb
-    )
+    await message.answer(response_msg, reply_markup=yes_no_kb if success else None)
 
-    await state.set_state(ParseStates.confirm_add_another)
+    if success:
+        await state.set_state(ParseStates.confirm_add_another)
+
+    else:
+        await state.set_state(ParseStates.add_item_name)
 
 
 @dp.message(ParseStates.confirm_add_another)
@@ -328,11 +369,135 @@ async def on_confirm_add_another(message: Message, state: FSMContext):
 
     if text == "✅ Да":
         await message.answer("🔍 Введите название следующего предмета:")
+
         await state.set_state(ParseStates.add_item_name)
 
     elif text == "❌ Нет":
         await message.answer("⚡️ Начинаем парсинг...")
 
-        tg_id = message.from_user.id
+        await handle_start_parse(tg_id=message.from_user.id)
+
+
+@dp.message(ParseStates.active_parse_action)
+async def handle_active_parse_action(message: Message, state: FSMContext):
+    text = message.text.strip()
+    tg_id = message.from_user.id
+
+    if text == "➕ Добавить предметы":
+        await message.answer("🔍 Введите название предмета:")
+
+        await state.set_state(ParseStates.add_item_name)
+
+    elif text == "🛑 Остановить парс":
+        await handle_stop_parse(tg_id=tg_id)
+
+        await message.answer("🛑 Парсинг остановлен.")
+
+        await state.clear()
+
+    elif text == "🗑 Удалить предметы":
+        existed_items = await lis_crud.get_items_by_tg_id(tg_id=tg_id)
+
+        item_list = "\n".join(
+            f"• [{item.id}] {item.skin_name}" for item in existed_items
+        )
+
+        await message.answer(
+            "🗑 Удаление предметов. Вот текущий список:\n\n"
+            f"{item_list}\n\nВведите ID предмета(ов), который(ые) хотите удалить:"
+        )
+
+        await state.set_state(ParseStates.delete_item_id)
+
+    elif text == "❌ Ничего":
+        await message.answer("👌 Окей, ничего не меняем.")
+
+        await state.clear()
+
+    else:
+        await message.answer("❓ Пожалуйста, выберите один из вариантов с клавиатуры.")
+
+
+@dp.message(ParseStates.delete_item_id)
+async def delete_item_by_id(message: Message, state: FSMContext):
+    input_text = message.text.strip()
+    tg_id = message.from_user.id
+
+    raw_ids = [item.strip() for item in input_text.replace(",", " ").split()]
+
+    try:
+        item_ids = list({int(item_id) for item_id in raw_ids if item_id.isdigit()})
+
+    except ValueError:
+        await message.answer("❌ Убедитесь, что все ID — это числа.")
+        return
+
+    if not item_ids:
+        await message.answer("❌ Не введено ни одного корректного ID.")
+        return
+
+    deleted_ids = await lis_crud.delete_items_by_ids(tg_id=tg_id, item_ids=item_ids)
+
+    if deleted_ids:
+        await message.answer(
+            f"✅ Удалены предметы с ID: {', '.join(map(str, deleted_ids))}"
+        )
+
+    else:
+        await message.answer("❌ Ни один предмет не был найден и удалён.")
+
+    remaining_items = await lis_crud.get_items_by_tg_id(tg_id=tg_id)
+
+    if remaining_items:
+        await message.answer("🔁 Список предметов обновлён. Перезапускаем парсинг...")
 
         await handle_start_parse(tg_id=tg_id)
+
+    else:
+        await handle_stop_parse(tg_id=tg_id)
+
+        await message.answer(
+            "🛑 У вас больше нет предметов для парсинга. Парсинг остановлен."
+        )
+
+    await state.clear()
+
+
+@dp.message(ParseStates.confirm_start_parse)
+async def on_start_parse_options(message: Message, state: FSMContext):
+    text = message.text.strip()
+    tg_id = message.from_user.id
+
+    if text == "✅ Возобновить":
+        await message.answer("🔄 Возобновляем парсинг...")
+
+        await handle_start_parse(tg_id=tg_id)
+
+        await state.clear()
+
+    elif text == "➕ Добавить предметы":
+        await message.answer("🆕 Введите название предмета:")
+
+        await state.set_state(ParseStates.add_item_name)
+
+    elif text == "🗑 Удалить предметы":
+        items = await lis_crud.get_items_by_tg_id(tg_id=tg_id)
+
+        item_list = "\n".join(f"• ID: {item.id} — {item.skin_name}" for item in items)
+
+        await message.answer(
+            "🗑 Введите ID предметов, которые хотите удалить (через запятую):\n\n"
+            + item_list
+        )
+
+        await state.set_state(ParseStates.delete_item_id)
+
+    elif text == "❌ Ничего":
+        await message.answer("👌 Окей, ничего не делаем.")
+
+        await state.clear()
+
+    else:
+        await message.answer(
+            "❓ Неизвестная команда. Пожалуйста, выберите действие с клавиатуры."
+        )

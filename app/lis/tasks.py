@@ -21,7 +21,11 @@ async def start_listener_for_user(
             print(f"🔴 Listener для {tg_id} остановлен")
 
     task = asyncio.create_task(
-        run_node_listener(ws_token=ws_token, conditions=conditions)
+        run_node_listener(
+            ws_token=ws_token,
+            conditions=conditions,
+            tg_id=tg_id,
+        )
     )
     active_listeners[tg_id] = task
     print(f"🟢 Listener для {tg_id} запущен")

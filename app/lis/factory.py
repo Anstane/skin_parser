@@ -1,4 +1,7 @@
-from app.lis.task_management import start_listener_for_user
+from app.lis.tasks import (
+    start_listener_for_user,
+    stop_listener_for_user,
+)
 from app.lis.service import fetch_ws_token
 from app.lis import crud as lis_crud
 
@@ -15,3 +18,7 @@ async def handle_start_parse(tg_id: int) -> None:
         ws_token=ws_token,
         conditions=conditions,
     )
+
+
+async def handle_stop_parse(tg_id: int) -> None:
+    await stop_listener_for_user(tg_id=tg_id)

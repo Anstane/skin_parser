@@ -34,7 +34,7 @@ async def get_items_by_tg_id(tg_id: int) -> list[SkinToParse]:
         stmt = select(SkinToParse).where(SkinToParse.tg_id == tg_id)
 
         result = await session.execute(statement=stmt)
-        return result.all()
+        return result.scalars().all()
 
 
 async def set_parse_status(tg_id: int, active: bool):
@@ -50,6 +50,7 @@ async def set_parse_status(tg_id: int, active: bool):
                 .where(ActiveParse.tg_id == tg_id)
                 .values(is_active=active)
             )
+
         else:
             await session.execute(
                 insert(ActiveParse).values(tg_id=tg_id, is_active=active)
@@ -82,12 +83,24 @@ async def add_item_to_parse(
     skin_name: str,
     patterns: list[str],
     float: str | None = None,
-) -> None:
+) -> tuple[bool, str]:
     patterns_str = (
         ",".join([p.strip() for p in patterns if p.strip()]) if patterns else None
     )
 
     async for session in db_helper.get_async_session():
+        stmt = select(SkinToParse).where(
+            SkinToParse.tg_id == tg_id,
+            SkinToParse.skin_name == skin_name,
+        )
+        existed_item = await session.scalar(statement=stmt)
+
+        if existed_item:
+            return (
+                False,
+                "❗ Такой предмет уже есть в списке для парсинга. Укажите название повторно.",
+            )
+
         item = SkinToParse(
             tg_id=tg_id,
             skin_name=skin_name,
@@ -97,3 +110,23 @@ async def add_item_to_parse(
 
         session.add(item)
         await session.commit()
+
+        return True, "✅ Предмет успешно добавлен. Хотите добавить ещё один?"
+
+
+async def delete_items_by_ids(tg_id: int, item_ids: list[int]) -> list[int]:
+    async for session in db_helper.get_async_session():
+        result = await session.execute(
+            select(SkinToParse).where(
+                SkinToParse.id.in_(item_ids), SkinToParse.tg_id == tg_id
+            )
+        )
+        items = result.scalars().all()
+
+        deleted_ids = [item.id for item in items]
+
+        for item in items:
+            await session.delete(item)
+
+        await session.commit()
+        return deleted_ids

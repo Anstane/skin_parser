@@ -9,7 +9,12 @@ skip_keyboard = ReplyKeyboardMarkup(
 
 
 yes_no_kb = ReplyKeyboardMarkup(
-    keyboard=[[KeyboardButton(text="✅ Да"), KeyboardButton(text="❌ Нет")]],
+    keyboard=[
+        [
+            KeyboardButton(text="✅ Да"),
+            KeyboardButton(text="❌ Нет"),
+        ]
+    ],
     resize_keyboard=True,
     one_time_keyboard=True,
 )
@@ -17,7 +22,10 @@ yes_no_kb = ReplyKeyboardMarkup(
 
 parse_action_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="➕ Добавить предметы")],
+        [
+            KeyboardButton(text="➕ Добавить предметы"),
+            KeyboardButton(text="🗑 Удалить предметы"),
+        ],
         [KeyboardButton(text="🛑 Остановить парс")],
         [KeyboardButton(text="❌ Ничего")],
     ],
@@ -28,9 +36,10 @@ parse_action_kb = ReplyKeyboardMarkup(
 
 start_parse_kb = ReplyKeyboardMarkup(
     keyboard=[
+        [KeyboardButton(text="✅ Возобновить")],
         [
-            KeyboardButton(text="✅ Возобновить"),
-            KeyboardButton(text="✏️ Перезаписать предметы"),
+            KeyboardButton(text="➕ Добавить предметы"),
+            KeyboardButton(text="🗑 Удалить предметы"),
         ],
         [KeyboardButton(text="❌ Ничего")],
     ],

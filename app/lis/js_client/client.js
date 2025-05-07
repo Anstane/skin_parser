@@ -9,7 +9,7 @@ const rl = readline.createInterface({
 
 async function getToken() {
     return new Promise((resolve) => {
-        rl.question('Enter the token: ', (answer) => {
+        rl.question("", (answer) => {
             resolve(answer);
             rl.close();
         });

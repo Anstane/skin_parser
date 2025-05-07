@@ -20,3 +20,5 @@ class ParseStates(StatesGroup):
     add_item_float = State()
     add_item_patterns = State()
     confirm_add_another = State()
+
+    delete_item_id = State()

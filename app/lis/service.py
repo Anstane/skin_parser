@@ -4,7 +4,12 @@ import asyncio
 import httpx
 
 from app.lis.schemas import ItemConditionsSchema
-from app.lis.utils import check_item_against_conditions
+from app.lis.utils import (
+    check_item_against_conditions,
+    format_item_message,
+)
+
+from app.config import settings
 
 
 async def get_user_balance(lis_token: str) -> dict:
@@ -65,7 +70,11 @@ async def fetch_ws_token(lis_token: str) -> str:
         return response.json()["data"]["token"]
 
 
-async def run_node_listener(ws_token: str, conditions: ItemConditionsSchema) -> None:
+async def run_node_listener(
+    ws_token: str,
+    conditions: ItemConditionsSchema,
+    tg_id: int,
+) -> None:
     process = await asyncio.create_subprocess_exec(
         "node",
         "C:/Dev/MyDev/skin_parser/app/lis/js_client/client.js",
@@ -90,9 +99,27 @@ async def run_node_listener(ws_token: str, conditions: ItemConditionsSchema) -> 
             event_data = json.loads(decoded_line)
 
             if check_item_against_conditions(event_data, conditions.items):
-                print("💎 Найден подходящий айтем:", event_data)
+                event = event_data["event"]
+
+                if event in {"obtained_skin_added", "obtained_skin_price_changed"}:
+                    message = format_item_message(item=event_data, event=event)
+
+                    await send_telegram_message(tg_id=tg_id, message=message)
 
         except json.JSONDecodeError as e:
             print(f"❌ Ошибка декодирования JSON: {e}")
 
     await process.wait()
+
+
+async def send_telegram_message(tg_id: int, message: str) -> None:
+    async with httpx.AsyncClient() as http_client:
+        token = settings.TELEGRAM.token
+        response = await http_client.post(
+            url=f"https://api.telegram.org/bot{token}/sendMessage",
+            data={
+                "chat_id": tg_id,
+                "text": message,
+                "parse_mode": "HTML",
+            },
+        )

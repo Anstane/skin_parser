@@ -11,7 +11,5 @@ class AuthLis(Base):
         autoincrement=True,
         unique=True,
     )
-    tg_id: Mapped[int] = mapped_column(
-        unique=True,
-    )
+    tg_id: Mapped[int] = mapped_column(unique=True)
     lis_token: Mapped[str]

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram.types import Message
 
 from app.lis.schemas import ConditionSchema
@@ -78,3 +80,38 @@ def check_item_against_conditions(
         return True
 
     return False
+
+
+def format_date(date_str: str) -> str:
+    try:
+        dt = datetime.fromisoformat(date_str.rstrip("Z"))
+        return dt.strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return date_str
+
+
+def format_item_message(item: dict, event: str) -> str:
+    name = item.get("name", "Без названия")
+    price = item.get("price", "?")
+    unlock_at = format_date(item.get("unlock_at", "—"))
+    created_at = format_date(item.get("created_at", "—"))
+    float_value = item.get("item_float", "—")
+    paint_seed = item.get("item_paint_seed", "—")
+
+    title_map = {
+        "obtained_skin_added": "💎 <b>Найден новый скин!</b>",
+        "obtained_skin_price_changed": "💰 <b>Обновлена цена скина!</b>",
+    }
+
+    date_label = "Добавлен" if event == "obtained_skin_added" else "Обновлено"
+    price_label = "Цена" if event == "obtained_skin_added" else "Новая цена"
+
+    return (
+        f"{title_map.get(event, '')}\n\n"
+        f"🎯 <b>{name}</b>\n"
+        f"💰 {price_label}: <b>{price} $</b>\n"
+        f"🔓 Разблокировка: {unlock_at}\n"
+        f"🕓 {date_label}: {created_at}\n"
+        f"🧬 Флоат: {float_value}\n"
+        f"🎨 Паттерн: {paint_seed}"
+    )

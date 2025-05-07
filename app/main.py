@@ -5,6 +5,8 @@ from app.telegram.bot_config import bot
 
 
 async def main() -> None:
+    print("Бот запускается...")
+
     await dp.start_polling(bot)
 
 
