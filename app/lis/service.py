@@ -76,7 +76,10 @@ async def run_node_listener(
     conditions: ItemConditionsSchema,
     tg_id: int,
 ) -> None:
-    asyncio.sleep(10)
+    logger.info("sleep")
+    await asyncio.sleep(10)
+    logger.info("sleep2")
+
     logger.info("Мы в субпроцессе 1")
     process = await asyncio.create_subprocess_exec(
         "node",
