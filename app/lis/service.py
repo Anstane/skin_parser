@@ -96,7 +96,7 @@ async def run_node_listener(
 
         logger.info(f"Строчка {line}")
         if not line:
-            break
+            continue
 
         decoded_line = line.decode("utf-8").strip()
         logger.info(f"decode {decoded_line}")
