@@ -76,6 +76,7 @@ async def run_node_listener(
     conditions: ItemConditionsSchema,
     tg_id: int,
 ) -> None:
+    logger.info("Мы в субпроцессе 1")
     process = await asyncio.create_subprocess_exec(
         "node",
         "/app/app/lis/js_client/client.js",
@@ -83,6 +84,8 @@ async def run_node_listener(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
+
+    logger.info("Мы в субпроцессе 2")
 
     process.stdin.write((ws_token + "\n").encode())
     await process.stdin.drain()
