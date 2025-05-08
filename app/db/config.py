@@ -29,6 +29,6 @@ class DatabaseConfig:
 
 
 db_helper = DatabaseConfig(
-    connect_url=str(settings.DB_CONFIG.db_url),
-    echo=settings.DB_CONFIG.echo,
+    connect_url=str(settings.POSTGRES.async_connect_url),
+    echo=settings.POSTGRES.ECHO_LOG,
 )

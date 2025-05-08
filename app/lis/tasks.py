@@ -1,6 +1,6 @@
 import asyncio
 
-from app.lis.service import run_node_listener
+from app.lis.service import run_node_listener, send_telegram_message
 from app.lis.schemas import ItemConditionsSchema
 from app.lis import crud as lis_crud
 
@@ -18,7 +18,7 @@ async def start_listener_for_user(
         try:
             await task
         except asyncio.CancelledError:
-            print(f"🔴 Listener для {tg_id} остановлен")
+            await send_telegram_message(tg_id, f"🔴 Парс для {tg_id} остановлен")
 
     task = asyncio.create_task(
         run_node_listener(
@@ -28,20 +28,19 @@ async def start_listener_for_user(
         )
     )
     active_listeners[tg_id] = task
-    print(f"🟢 Listener для {tg_id} запущен")
+
+    await send_telegram_message(tg_id, f"🟢 Парс для {tg_id} запущен")
 
     await lis_crud.set_parse_status(tg_id=tg_id, active=True)
 
 
 async def stop_listener_for_user(tg_id: int):
-    task = active_listeners.get(tg_id)
+    task = active_listeners.pop(tg_id, None)
     if task:
         task.cancel()
         try:
             await task
         except asyncio.CancelledError:
-            print(f"🔴 Listener для {tg_id} остановлен")
-
-        del active_listeners[tg_id]
+            pass
 
     await lis_crud.set_parse_status(tg_id=tg_id, active=False)

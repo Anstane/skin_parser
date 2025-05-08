@@ -1,6 +1,0 @@
-m4a4-temukau-field-tested, 0.20
-awp-asiimov-field-tested, 0.22
-ak-47-vulcan-field-tested, 0.22
-★-driver-gloves-snow-leopard-field-tested, 0.25
-★-driver-gloves-snow-leopard-battle-scarred, 0.55
-★-driver-gloves-king-snake-field-tested, 0.24

@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    container_name: telegram_bot
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: poetry run python -m app.main
+
+  db:
+    image: postgres:16.3-alpine3.20
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/data:/var/lib/postgresql/data

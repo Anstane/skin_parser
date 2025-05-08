@@ -1,3 +1,4 @@
+migrations/versions
 venv
 .venv
 *.pyc
@@ -6,3 +7,4 @@ venv
 database.db
 node_modules/
 __pycache__/
+docker

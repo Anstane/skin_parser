@@ -130,3 +130,11 @@ async def delete_items_by_ids(tg_id: int, item_ids: list[int]) -> list[int]:
 
         await session.commit()
         return deleted_ids
+
+
+async def get_all_active_parse_models() -> list[ActiveParse]:
+    async for session in db_helper.get_async_session():
+        stmt = select(ActiveParse).where(ActiveParse.is_active == True)
+
+        result = await session.scalars(statement=stmt)
+        return result.all()

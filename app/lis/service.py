@@ -77,7 +77,7 @@ async def run_node_listener(
 ) -> None:
     process = await asyncio.create_subprocess_exec(
         "node",
-        "C:/Dev/MyDev/skin_parser/app/lis/js_client/client.js",
+        "/app/app/lis/js_client/client.js",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -114,7 +114,7 @@ async def run_node_listener(
 
 async def send_telegram_message(tg_id: int, message: str) -> None:
     async with httpx.AsyncClient() as http_client:
-        token = settings.TELEGRAM.token
+        token = settings.TELEGRAM.TOKEN
         response = await http_client.post(
             url=f"https://api.telegram.org/bot{token}/sendMessage",
             data={
