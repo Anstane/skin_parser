@@ -98,8 +98,6 @@ async def run_node_listener(
         try:
             event_data = json.loads(decoded_line)
 
-            print(event_data)
-
             if check_item_against_conditions(event_data, conditions.items):
                 event = event_data["event"]
 

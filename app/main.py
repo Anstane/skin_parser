@@ -5,9 +5,11 @@ from app.lis.dispatchers import dp
 
 from app.telegram.bot_config import bot
 
+from app.logger import logger
+
 
 async def main() -> None:
-    print("Бот запускается...")
+    logger.info("Бот запускается...")
 
     await handle_restart_parse_after_reboot()
 

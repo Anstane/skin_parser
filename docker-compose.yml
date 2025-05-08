@@ -11,6 +11,7 @@ services:
       - .env
     volumes:
       - .:/app
+      - ./logs:/app/logs
     command: poetry run python -m app.main
 
   db:
