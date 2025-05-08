@@ -4,6 +4,8 @@ from app.lis.service import run_node_listener, send_telegram_message
 from app.lis.schemas import ItemConditionsSchema
 from app.lis import crud as lis_crud
 
+from app.logger import logger
+
 active_listeners: dict[int, asyncio.Task] = {}
 
 
@@ -28,6 +30,8 @@ async def start_listener_for_user(
         )
     )
     active_listeners[tg_id] = task
+
+    logger.info(active_listeners)
 
     await send_telegram_message(tg_id, f"🟢 Парс для {tg_id} запущен")
 

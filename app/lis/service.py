@@ -10,6 +10,7 @@ from app.lis.utils import (
 )
 
 from app.config import settings
+from app.logger import logger
 
 
 async def get_user_balance(lis_token: str) -> dict:
@@ -94,6 +95,8 @@ async def run_node_listener(
         decoded_line = line.decode("utf-8").strip()
         if not decoded_line:
             continue
+
+        logger.info(decoded_line)
 
         try:
             event_data = json.loads(decoded_line)
