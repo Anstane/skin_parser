@@ -20,6 +20,8 @@ async def start_listener_for_user(
         except asyncio.CancelledError:
             await send_telegram_message(tg_id, f"🔴 Парс для {tg_id} остановлен")
 
+    print(tg_id, ws_token, conditions)
+
     task = asyncio.create_task(
         run_node_listener(
             ws_token=ws_token,
