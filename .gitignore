@@ -8,3 +8,4 @@ database.db
 node_modules/
 __pycache__/
 docker
+app.log
