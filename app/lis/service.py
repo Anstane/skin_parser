@@ -79,7 +79,7 @@ async def run_node_listener(
     logger.info("Мы в субпроцессе 1")
     process = await asyncio.create_subprocess_exec(
         "node",
-        "/app/app/lis/js_client/client.js",
+        "/app/lis/js_client/client.js",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,

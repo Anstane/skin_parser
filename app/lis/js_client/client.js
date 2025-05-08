@@ -41,7 +41,7 @@ async function main() {
         const sub = centrifuge.newSubscription("public:obtained-skins");
 
         sub.on('publication', function (ctx) {
-            process.stdout.write(JSON.stringify(ctx.data) + '\n');
+            console.log(JSON.stringify(ctx.data));
         });
 
         sub.subscribe();
