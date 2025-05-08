@@ -21,6 +21,7 @@ async def start_listener_for_user(
             await task
         except asyncio.CancelledError:
             await send_telegram_message(tg_id, f"🔴 Парс для {tg_id} остановлен")
+            logger.info(f"🔴 Парс для {tg_id} остановлен")
 
     task = asyncio.create_task(
         run_node_listener(
@@ -31,9 +32,8 @@ async def start_listener_for_user(
     )
     active_listeners[tg_id] = task
 
-    logger.info(active_listeners)
-
     await send_telegram_message(tg_id, f"🟢 Парс для {tg_id} запущен")
+    logger.info(f"🟢 Парс для {tg_id} запущен")
 
     await lis_crud.set_parse_status(tg_id=tg_id, active=True)
 
