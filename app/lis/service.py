@@ -93,10 +93,13 @@ async def run_node_listener(
     while True:
         logger.info("Мы в субпроцессе 3")
         line = await process.stdout.readline()
+
+        logger.info(f"Строчка {line}")
         if not line:
             break
 
         decoded_line = line.decode("utf-8").strip()
+        logger.info(f"decode {decoded_line}")
         if not decoded_line:
             continue
 
