@@ -91,6 +91,7 @@ async def run_node_listener(
     await process.stdin.drain()
 
     while True:
+        logger.info("Мы в субпроцессе 3")
         line = await process.stdout.readline()
         if not line:
             break
