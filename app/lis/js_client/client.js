@@ -1,6 +1,6 @@
-import { Centrifuge } from 'centrifuge';
-import WebSocket from 'ws';
-import readline from 'readline';
+const { Centrifuge } = require('centrifuge');
+const WebSocket = require('ws');
+const readline = require('readline');
 
 const rl = readline.createInterface({
     input: process.stdin,

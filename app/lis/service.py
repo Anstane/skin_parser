@@ -76,11 +76,6 @@ async def run_node_listener(
     conditions: ItemConditionsSchema,
     tg_id: int,
 ) -> None:
-    logger.info("sleep")
-    await asyncio.sleep(10)
-    logger.info("sleep2")
-
-    logger.info("Мы в субпроцессе 1")
     process = await asyncio.create_subprocess_exec(
         "node",
         "/app/app/lis/js_client/client.js",
@@ -89,25 +84,17 @@ async def run_node_listener(
         stderr=asyncio.subprocess.PIPE,
     )
 
-    logger.info("Мы в субпроцессе 2")
-
     process.stdin.write((ws_token + "\n").encode())
     await process.stdin.drain()
 
     while True:
-        logger.info("Мы в субпроцессе 3")
         line = await process.stdout.readline()
-
-        logger.info(f"Строчка {line}")
         if not line:
             break
 
         decoded_line = line.decode("utf-8").strip()
-        logger.info(f"decode {decoded_line}")
         if not decoded_line:
             continue
-
-        logger.info(decoded_line)
 
         try:
             event_data = json.loads(decoded_line)
