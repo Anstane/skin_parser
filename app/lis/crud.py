@@ -89,17 +89,17 @@ async def add_item_to_parse(
     )
 
     async for session in db_helper.get_async_session():
-        stmt = select(SkinToParse).where(
-            SkinToParse.tg_id == tg_id,
-            SkinToParse.skin_name == skin_name,
-        )
-        existed_item = await session.scalar(statement=stmt)
+        # stmt = select(SkinToParse).where(
+        #     SkinToParse.tg_id == tg_id,
+        #     SkinToParse.skin_name == skin_name,
+        # )
+        # existed_item = await session.scalar(statement=stmt)
 
-        if existed_item:
-            return (
-                False,
-                "❗ Такой предмет уже есть в списке для парсинга. Укажите название повторно.",
-            )
+        # if existed_item:
+        #     return (
+        #         False,
+        #         "❗ Такой предмет уже есть в списке для парсинга. Укажите название повторно.",
+        #     )
 
         item = SkinToParse(
             tg_id=tg_id,
