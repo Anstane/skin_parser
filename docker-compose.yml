@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   bot:
     build: .
@@ -23,6 +21,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres5432
     ports:
-      - "5432:5432"
+      - "6543:5432"
     volumes:
       - ./docker/postgres/data:/var/lib/postgresql/data
