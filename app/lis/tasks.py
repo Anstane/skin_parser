@@ -7,6 +7,7 @@ from app.lis import crud as lis_crud
 from app.logger import logger
 
 active_listeners: dict[int, asyncio.Task] = {}
+active_watchdogs: dict[int, asyncio.Task] = {}
 
 
 async def start_listener_for_user(
@@ -33,6 +34,13 @@ async def start_listener_for_user(
     )
     active_listeners[tg_id] = task
 
+    if tg_id in active_watchdogs:
+        active_watchdogs[tg_id].cancel()
+
+    watchdog_task = asyncio.create_task(watchdog_for_user(tg_id))
+
+    active_watchdogs[tg_id] = watchdog_task
+
     await send_telegram_message(tg_id, f"🟢 Парс для {tg_id} запущен")
 
     logger.info(f"🟢 Парс для {tg_id} запущен")
@@ -49,4 +57,27 @@ async def stop_listener_for_user(tg_id: int):
         except asyncio.CancelledError:
             logger.info(f"🔴 Парс для {tg_id} остановлен")
 
+    watchdog = active_watchdogs.pop(tg_id, None)
+    if watchdog:
+        watchdog.cancel()
+        try:
+            await watchdog
+        except asyncio.CancelledError:
+            logger.info(f"🔕 Сторож для {tg_id} остановлен")
+
     await lis_crud.set_parse_status(tg_id=tg_id, active=False)
+
+
+async def watchdog_for_user(tg_id: int, check_interval: int = 30):
+    while True:
+        await asyncio.sleep(check_interval)
+
+        task = active_listeners.get(tg_id)
+
+        if not task or task.done():
+            await send_telegram_message(tg_id, "⚠️ Парсинг неожиданно остановился.")
+
+            await lis_crud.set_parse_status(tg_id=tg_id, active=False)
+
+            logger.warning(f"⚠️ Парсинг для {tg_id} завершился или потерян.")
+            break

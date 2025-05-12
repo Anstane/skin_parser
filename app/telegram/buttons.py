@@ -26,6 +26,7 @@ parse_action_kb = ReplyKeyboardMarkup(
             KeyboardButton(text="➕ Добавить предметы"),
             KeyboardButton(text="🗑 Удалить предметы"),
         ],
+        [KeyboardButton(text="📝 Список предметов в парсе")],
         [KeyboardButton(text="🛑 Остановить парс")],
         [KeyboardButton(text="❌ Ничего")],
     ],

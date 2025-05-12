@@ -412,6 +412,20 @@ async def handle_active_parse_action(message: Message, state: FSMContext):
 
         await state.set_state(ParseStates.delete_item_id)
 
+    elif text == "📝 Список предметов в парсе":
+        existed_items = await lis_crud.get_items_by_tg_id(tg_id=tg_id)
+
+        item_list = "\n".join(
+            f"• [{item.id}] {item.skin_name}"
+            f"{f' | Паттерны: {item.patterns}' if item.patterns else ''}"
+            f"{f' | Флоат: {item.float}' if item.float else ''}"
+            for item in existed_items
+        )
+
+        await message.answer("📋 Вот список ваших предметов:\n\n" + item_list)
+
+        await state.clear()
+
     elif text == "❌ Ничего":
         await message.answer("👌 Окей, ничего не меняем.")
 
