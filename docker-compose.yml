@@ -1,16 +1,32 @@
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: telegram_bot
     restart: always
     depends_on:
       - db
+      - ws-server
     env_file:
       - .env
     volumes:
       - .:/app
       - ./logs:/app/logs
     command: poetry run python -m app.main
+    networks:
+      - internal
+
+  ws-server:
+    build:
+      context: ./js_client
+      dockerfile: Dockerfile
+    container_name: ws_server
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - internal
 
   db:
     image: postgres:16.3-alpine3.20
@@ -24,3 +40,9 @@ services:
       - "6543:5432"
     volumes:
       - ./docker/postgres/data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

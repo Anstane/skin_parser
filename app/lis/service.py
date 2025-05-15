@@ -2,6 +2,7 @@ import json
 import asyncio
 
 import httpx
+import websockets
 
 from app.lis.schemas import ItemConditionsSchema
 from app.lis.utils import (
@@ -71,46 +72,70 @@ async def fetch_ws_token(lis_token: str) -> str:
         return response.json()["data"]["token"]
 
 
+active_websockets: dict[int, websockets.ClientProtocol] = {}
+
+
 async def run_node_listener(
     ws_token: str,
     conditions: ItemConditionsSchema,
     tg_id: int,
 ) -> None:
-    process = await asyncio.create_subprocess_exec(
-        "node",
-        "/app/app/lis/js_client/client.js",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    uri = "ws://ws-server:8080"
 
-    process.stdin.write((ws_token + "\n").encode())
-    await process.stdin.drain()
+    try:
+        async with websockets.connect(uri) as websocket:
+            active_websockets[tg_id] = websocket
 
-    while True:
-        line = await process.stdout.readline()
-        if not line:
-            break
+            await websocket.send(json.dumps({"type": "start", "token": ws_token}))
 
-        decoded_line = line.decode("utf-8").strip()
-        if not decoded_line:
-            continue
+            logger.info(f"🔌 Подключён к WS для пользователя {tg_id}")
 
-        try:
-            event_data = json.loads(decoded_line)
+            while True:
+                try:
+                    message = await websocket.recv()
 
-            if check_item_against_conditions(event_data, conditions.items):
-                event = event_data["event"]
+                    decoded = json.loads(message)
 
-                if event in {"obtained_skin_added", "obtained_skin_price_changed"}:
-                    message = format_item_message(item=event_data, event=event)
+                    if decoded.get("type") != "event":
+                        continue
 
-                    await send_telegram_message(tg_id=tg_id, message=message)
+                    item_data = decoded.get("data")
+                    if not item_data:
+                        continue
 
-        except json.JSONDecodeError as e:
-            print(f"❌ Ошибка декодирования JSON: {e}")
+                    if check_item_against_conditions(item_data, conditions.items):
+                        event = item_data.get("event")
 
-    await process.wait()
+                        if event in {
+                            "obtained_skin_added",
+                            "obtained_skin_price_changed",
+                        }:
+                            formatted_message = format_item_message(
+                                item=item_data, event=event
+                            )
+
+                            await send_telegram_message(
+                                tg_id=tg_id, message=formatted_message
+                            )
+
+                except json.JSONDecodeError:
+                    logger.warning(f"❌ Некорректный JSON от WS-сервера: {message}")
+
+                except websockets.ConnectionClosed:
+                    logger.error(f"🔴 WS-соединение закрыто для {tg_id}")
+                    break
+
+                except Exception as e:
+                    logger.exception(
+                        f"❌ Ошибка во время парсинга WS-сообщения для {tg_id}: {e}"
+                    )
+                    await asyncio.sleep(1)
+
+    except Exception as e:
+        logger.exception(f"❌ Ошибка подключения к WS-серверу: {e}")
+
+    finally:
+        active_websockets.pop(tg_id, None)
 
 
 async def send_telegram_message(tg_id: int, message: str) -> None:

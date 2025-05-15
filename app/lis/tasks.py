@@ -1,6 +1,11 @@
 import asyncio
+import json
 
-from app.lis.service import run_node_listener, send_telegram_message
+from app.lis.service import (
+    run_node_listener,
+    send_telegram_message,
+    active_websockets,
+)
 from app.lis.schemas import ItemConditionsSchema
 from app.lis import crud as lis_crud
 
@@ -56,6 +61,15 @@ async def stop_listener_for_user(tg_id: int):
             await task
         except asyncio.CancelledError:
             logger.info(f"🔴 Парс для {tg_id} остановлен")
+
+    websocket = active_websockets.pop(tg_id, None)
+    if websocket:
+        try:
+            await websocket.send(json.dumps({"type": "stop"}))
+            await websocket.close()
+            logger.info(f"🔌 WebSocket для {tg_id} закрыт")
+        except Exception as e:
+            logger.warning(f"❌ Ошибка при закрытии WS {tg_id}: {e}")
 
     watchdog = active_watchdogs.pop(tg_id, None)
     if watchdog:
