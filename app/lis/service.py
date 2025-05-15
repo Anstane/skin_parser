@@ -76,7 +76,7 @@ active_websockets: dict[int, websockets.ClientProtocol] = {}
 
 
 async def run_node_listener(
-    ws_token: str,
+    lis_token: str,
     conditions: ItemConditionsSchema,
     tg_id: int,
 ) -> None:
@@ -86,7 +86,7 @@ async def run_node_listener(
         async with websockets.connect(uri) as websocket:
             active_websockets[tg_id] = websocket
 
-            await websocket.send(json.dumps({"type": "start", "token": ws_token}))
+            await websocket.send(json.dumps({"type": "start", "lis_token": lis_token}))
 
             logger.info(f"🔌 Подключён к WS для пользователя {tg_id}")
 

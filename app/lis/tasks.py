@@ -17,7 +17,7 @@ active_watchdogs: dict[int, asyncio.Task] = {}
 
 async def start_listener_for_user(
     tg_id: int,
-    ws_token: str,
+    lis_token: str,
     conditions: ItemConditionsSchema,
 ):
     if tg_id in active_listeners:
@@ -32,7 +32,7 @@ async def start_listener_for_user(
 
     task = asyncio.create_task(
         run_node_listener(
-            ws_token=ws_token,
+            lis_token=lis_token,
             conditions=conditions,
             tg_id=tg_id,
         )
