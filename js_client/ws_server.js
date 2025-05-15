@@ -1,8 +1,8 @@
-const WebSocket = require('ws');
-const { Centrifuge } = require('centrifuge');
-const fetch = require('node-fetch');
+import WebSocket, { WebSocketServer } from 'ws';
+import { Centrifuge } from 'centrifuge';
+import fetch from 'node-fetch';
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocketServer({ port: 8080 });
 
 async function fetchWsToken(lisToken) {
     const res = await fetch('https://api.lis-skins.com/v1/user/get-ws-token', {
