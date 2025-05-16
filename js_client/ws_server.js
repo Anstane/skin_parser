@@ -19,7 +19,6 @@ async function fetchWsToken(lisToken) {
     return json.data.token;
 }
 
-// test
 wss.on('connection', (ws) => {
     let centrifuge = null;
     let subscription = null;
