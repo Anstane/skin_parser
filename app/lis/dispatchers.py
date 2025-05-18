@@ -305,6 +305,28 @@ async def on_item_name(message: Message, state: FSMContext):
     await state.update_data(skin_name=skin_name)
 
     await message.answer(
+        "<b>💰 Укажите желаемую цену предмета:</b>\n\n"
+        "🧮 <i>Примеры:</i>\n"
+        "• <code>&lt;5</code> — дешевле 5$\n"
+        "• <code>&gt;10</code> — дороже 10$\n\n"
+        "❗ <i>Если цена не важна — отправьте</i> <code>-</code>",
+        parse_mode="HTML",
+    )
+
+    await state.set_state(ParseStates.add_item_price)
+
+
+@dp.message(ParseStates.add_item_price)
+async def on_item_price(message: Message, state: FSMContext):
+    price_input = message.text.strip()
+
+    price_condition = None
+    if price_input and price_input not in {"-", "нет", "Нет"}:
+        price_condition = price_input
+
+    await state.update_data(price=price_condition)
+
+    await message.answer(
         "<b>📏 Укажите желаемый float предмета:</b>\n\n"
         "🧮 <i>Примеры:</i>\n"
         "• <code>&gt;0.15</code> — больше 0.15\n"
@@ -349,6 +371,7 @@ async def on_item_patterns(message: Message, state: FSMContext):
     success, response_msg = await lis_crud.add_item_to_parse(
         tg_id=message.from_user.id,
         skin_name=data["skin_name"],
+        price=data["price"],
         float=data["float"],
         patterns=patterns,
     )
@@ -402,6 +425,7 @@ async def handle_active_parse_action(message: Message, state: FSMContext):
             f"• [{item.id}] {item.skin_name}"
             f"{f' | Паттерны: {item.patterns}' if item.patterns else ''}"
             f"{f' | Флоат: {item.float}' if item.float else ''}"
+            f"{f' | Ценник: {item.price}$' if item.price else ''}"
             for item in existed_items
         )
 
@@ -419,6 +443,7 @@ async def handle_active_parse_action(message: Message, state: FSMContext):
             f"• [{item.id}] {item.skin_name}"
             f"{f' | Паттерны: {item.patterns}' if item.patterns else ''}"
             f"{f' | Флоат: {item.float}' if item.float else ''}"
+            f"{f' | Ценник: {item.price}$' if item.price else ''}"
             for item in existed_items
         )
 

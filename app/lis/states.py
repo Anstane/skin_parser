@@ -17,6 +17,7 @@ class ParseStates(StatesGroup):
     ask_to_start_first_parse = State()
 
     add_item_name = State()
+    add_item_price = State()
     add_item_float = State()
     add_item_patterns = State()
     confirm_add_another = State()

@@ -31,3 +31,6 @@ JSON_SEARCH_PROMPT = (
     "Допустимые значения для <b>sort_by</b>:\n"
     "<code>oldest</code>, <code>newest</code>, <code>lowest_price</code>, <code>highest_price</code>"
 )
+
+
+USD_TO_RUB = 81.0

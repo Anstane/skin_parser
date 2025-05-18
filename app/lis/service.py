@@ -9,6 +9,7 @@ from app.lis.utils import (
     check_item_against_conditions,
     format_item_message,
 )
+from app.lis import constants
 
 from app.config import settings
 from app.logger import logger
@@ -149,3 +150,19 @@ async def send_telegram_message(tg_id: int, message: str) -> None:
                 "parse_mode": "HTML",
             },
         )
+
+
+async def fetch_usd_to_rub():
+    url = "https://www.cbr-xml-daily.ru/daily_json.js"
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(url)
+            data = response.json()
+
+            new_rate = data["Valute"]["USD"]["Value"]
+            constants.USD_TO_RUB = new_rate
+            logger.info(f"🔄 Курс доллара обновлён: {new_rate}")
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка при получении курса доллара: {e}")

@@ -16,5 +16,6 @@ class SkinToParse(Base):
     skin_name: Mapped[str]
     patterns: Mapped[str | None]
     float: Mapped[str | None]
+    price: Mapped[str | None]
 
     # __table_args__ = (UniqueConstraint("tg_id", "skin_name", name="uix_tg_skin_name"),)

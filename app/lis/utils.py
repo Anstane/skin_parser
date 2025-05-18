@@ -3,6 +3,9 @@ from datetime import datetime
 from aiogram.types import Message
 
 from app.lis.schemas import ConditionSchema
+from app.lis.constants import USD_TO_RUB
+
+from app.logger import logger
 
 
 async def send_first_skins(message: Message, skins: list) -> None:
@@ -52,10 +55,27 @@ def check_item_against_conditions(
     item_name = item.get("name")
     item_float = item.get("item_float")
     item_pattern = str(item.get("item_paint_seed"))
+    item_price = item.get("price")
 
     for cond in conditions:
         if cond.skin_name != item_name:
             continue
+
+        if cond.price_condition:
+            try:
+                if ">" in cond.price_condition:
+                    target = float(cond.price_condition.strip(" >"))
+                    if item_price is None or float(item_price) <= target:
+                        continue
+
+                elif "<" in cond.price_condition:
+                    target = float(cond.price_condition.strip(" <"))
+                    if item_price is None or float(item_price) >= target:
+                        continue
+
+            except ValueError:
+                logger.error(f"⚠️ Некорректное price_condition: {cond.price_condition}")
+                continue
 
         if cond.float_condition:
             try:
@@ -70,7 +90,7 @@ def check_item_against_conditions(
                         continue
 
             except ValueError:
-                print(f"⚠️ Некорректное float_condition: {cond.float_condition}")
+                logger.error(f"⚠️ Некорректное float_condition: {cond.float_condition}")
                 continue
 
         if cond.patterns:
@@ -106,10 +126,19 @@ def format_item_message(item: dict, event: str) -> str:
     date_label = "Добавлен" if event == "obtained_skin_added" else "Обновлено"
     price_label = "Цена" if event == "obtained_skin_added" else "Новая цена"
 
+    price_display = f"{price} $"
+    try:
+        price_float = float(price)
+        price_rub = round(price_float * USD_TO_RUB)
+        price_display = f"{price_float:.2f} $ ({price_rub} ₽)"
+
+    except (ValueError, TypeError):
+        pass
+
     return (
         f"{title_map.get(event, '')}\n\n"
         f"🎯 <b>{name}</b>\n"
-        f"💰 {price_label}: <b>{price} $</b>\n"
+        f"💰 {price_label}: <b>{price_display}</b>\n"
         f"🔓 Разблокировка: {unlock_at}\n"
         f"🕓 {date_label}: {created_at}\n"
         f"🧬 Флоат: {float_value}\n"

@@ -4,6 +4,7 @@ import json
 from app.lis.service import (
     run_node_listener,
     send_telegram_message,
+    fetch_usd_to_rub,
     active_websockets,
 )
 from app.lis.schemas import ItemConditionsSchema
@@ -95,3 +96,9 @@ async def watchdog_for_user(tg_id: int, check_interval: int = 30):
 
             logger.warning(f"⚠️ Парсинг для {tg_id} завершился или потерян.")
             break
+
+
+async def run_exchange_rate_updater():
+    while True:
+        await fetch_usd_to_rub()
+        await asyncio.sleep(3600)

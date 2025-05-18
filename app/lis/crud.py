@@ -71,6 +71,7 @@ async def get_conditions_for_user(tg_id: int) -> ItemConditionsSchema:
                 skin_name=row.skin_name,
                 patterns=row.patterns.split(",") if row.patterns else [],
                 float_condition=row.float,
+                price_condition=row.price,
             )
             for row in rows
         ]
@@ -82,6 +83,7 @@ async def add_item_to_parse(
     tg_id: int,
     skin_name: str,
     patterns: list[str],
+    price: str | None = None,
     float: str | None = None,
 ) -> tuple[bool, str]:
     patterns_str = (
@@ -106,6 +108,7 @@ async def add_item_to_parse(
             skin_name=skin_name,
             patterns=patterns_str,
             float=float,
+            price=price,
         )
 
         session.add(item)
