@@ -61,32 +61,16 @@ def check_item_against_conditions(
         if cond.skin_name != item_name:
             continue
 
-        if cond.price_condition:
-            try:
-                if ">" in cond.price_condition:
-                    target = float(cond.price_condition.strip(" >"))
-                    if item_price is None or float(item_price) <= target:
-                        continue
-
-                elif "<" in cond.price_condition:
-                    target = float(cond.price_condition.strip(" <"))
-                    if item_price is None or float(item_price) >= target:
-                        continue
-
-            except ValueError:
-                logger.error(f"⚠️ Некорректное price_condition: {cond.price_condition}")
-                continue
-
         if cond.float_condition:
             try:
                 if ">" in cond.float_condition:
-                    target = float(cond.float_condition.strip(" >"))
-                    if not item_float or float(item_float) <= target:
+                    target_float = float(cond.float_condition.strip(" >"))
+                    if not item_float or float(item_float) <= target_float:
                         continue
 
                 elif "<" in cond.float_condition:
-                    target = float(cond.float_condition.strip(" <"))
-                    if not item_float or float(item_float) >= target:
+                    target_float = float(cond.float_condition.strip(" <"))
+                    if not item_float or float(item_float) >= target_float:
                         continue
 
             except ValueError:
@@ -95,6 +79,22 @@ def check_item_against_conditions(
 
         if cond.patterns:
             if item_pattern not in cond.patterns:
+                continue
+
+        if cond.price_condition:
+            try:
+                if ">" in cond.price_condition:
+                    target_price = float(cond.price_condition.strip(" >"))
+                    if not item_price or float(item_price) <= target_price:
+                        continue
+
+                elif "<" in cond.price_condition:
+                    target_price = float(cond.price_condition.strip(" <"))
+                    if not item_price or float(item_price) >= target_price:
+                        continue
+
+            except ValueError:
+                logger.error(f"⚠️ Некорректное price_condition: {cond.price_condition}")
                 continue
 
         return True
