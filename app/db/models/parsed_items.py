@@ -19,6 +19,6 @@ class ParsedItems(Base):
     item_float: Mapped[str | None]
     price: Mapped[float | None]
     lis_item_id: Mapped[int]
-    created_at_lis: Mapped[datetime | None]
-    unlock_at_lis: Mapped[datetime | None]
+    created_at_lis: Mapped[str | None]
+    unlock_at_lis: Mapped[str | None]
     event: Mapped[str]
