@@ -1,4 +1,3 @@
-from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -17,5 +16,3 @@ class SkinToParse(Base):
     patterns: Mapped[str | None]
     float: Mapped[str | None]
     price: Mapped[str | None]
-
-    # __table_args__ = (UniqueConstraint("tg_id", "skin_name", name="uix_tg_skin_name"),)

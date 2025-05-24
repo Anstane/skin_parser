@@ -9,10 +9,13 @@ from app.lis.utils import (
     check_item_against_conditions,
     format_item_message,
 )
+from app.lis import crud as lis_crud
 from app.lis import constants
 
 from app.config import settings
 from app.logger import logger
+
+from app.db import ParsedItems
 
 
 async def get_user_balance(lis_token: str) -> dict:
@@ -115,6 +118,12 @@ async def run_node_listener(
                                 item=item_data, event=event
                             )
 
+                            await create_record_about_founded_item(
+                                tg_id=tg_id,
+                                item_data=item_data,
+                                event=event,
+                            )
+
                             await send_telegram_message(
                                 tg_id=tg_id, message=formatted_message
                             )
@@ -166,3 +175,15 @@ async def fetch_usd_to_rub():
 
     except Exception as e:
         logger.error(f"❌ Ошибка при получении курса доллара: {e}")
+
+
+async def create_record_about_founded_item(
+    tg_id: str,
+    item_data: dict,
+    event: str,
+) -> ParsedItems:
+    return await lis_crud.create_record_about_parsed_skin(
+        tg_id=tg_id,
+        item_data=item_data,
+        event=event,
+    )

@@ -2,7 +2,7 @@ from sqlalchemy import select, insert, update
 
 from app.lis.schemas import ItemConditionsSchema, ConditionSchema
 
-from app.db import db_helper, AuthLis, ActiveParse, SkinToParse
+from app.db import db_helper, AuthLis, ActiveParse, SkinToParse, ParsedItems
 
 
 async def check_exist_user_or_not(tg_id: int) -> AuthLis | None:
@@ -141,3 +141,27 @@ async def get_all_active_parse_models() -> list[ActiveParse]:
 
         result = await session.scalars(statement=stmt)
         return result.all()
+
+
+async def create_record_about_parsed_skin(
+    tg_id: str,
+    item_data: dict,
+    event: str,
+) -> ParsedItems:
+    async for session in db_helper.get_async_session():
+        new_item = ParsedItems(
+            tg_id=tg_id,
+            skin_name=item_data["name"],
+            pattern=item_data["item_paint_seed"],
+            item_float=item_data["item_float"],
+            price=item_data["price"],
+            lis_item_id=item_data["id"],
+            unlock_at_lis=item_data["unlock_at"],
+            created_at_lis=item_data["created_at"],
+            event=event,
+        )
+
+        session.add(new_item)
+        await session.commit(new_item)
+
+        return new_item
