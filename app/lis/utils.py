@@ -168,6 +168,7 @@ def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
             unlock_at = None
 
         item_text = (
+            f"🆔 ID: <code>{item.id}</code>\n"
             f"🔹 <b>{item.skin_name}</b>\n"
             f"🧩 Паттерн: <code>{item.pattern or '—'}</code>\n"
             f"💧 Флоат: <code>{item.item_float or '—'}</code>\n"
