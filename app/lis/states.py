@@ -23,3 +23,7 @@ class ParseStates(StatesGroup):
     confirm_add_another = State()
 
     delete_item_id = State()
+
+
+class ShowParsedStates(StatesGroup):
+    amount_of_records = State()

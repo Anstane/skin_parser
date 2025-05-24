@@ -8,6 +8,7 @@ from app.lis.schemas import ItemConditionsSchema
 from app.lis.utils import (
     check_item_against_conditions,
     format_item_message,
+    foramt_message,
 )
 from app.lis import crud as lis_crud
 from app.lis import constants
@@ -178,7 +179,7 @@ async def fetch_usd_to_rub():
 
 
 async def create_record_about_founded_item(
-    tg_id: str,
+    tg_id: int,
     item_data: dict,
     event: str,
 ) -> ParsedItems:
@@ -187,3 +188,14 @@ async def create_record_about_founded_item(
         item_data=item_data,
         event=event,
     )
+
+
+async def get_parsed_items_messages(tg_id: int, limit: int) -> list[str]:
+    parsed_items: list[ParsedItems] = await lis_crud.get_last_parsed_items(
+        tg_id=tg_id, limit=limit
+    )
+
+    if not parsed_items:
+        return ["🔍 Записи не найдены."]
+
+    return foramt_message(parsed_items=parsed_items)

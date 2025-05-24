@@ -16,6 +16,7 @@ from app.lis.states import (
     AuthStates,
     SearchForSkinStates,
     ParseStates,
+    ShowParsedStates,
 )
 from app.lis.constants import (
     SKIN_NAME_INPUT_PROMPT,
@@ -24,6 +25,7 @@ from app.lis.constants import (
 from app.lis.service import (
     get_user_balance,
     send_request_for_skins,
+    get_parsed_items_messages,
 )
 from app.lis.factory import (
     handle_start_parse,
@@ -543,3 +545,50 @@ async def on_start_parse_options(message: Message, state: FSMContext):
         await message.answer(
             "❓ Неизвестная команда. Пожалуйста, выберите действие с клавиатуры."
         )
+
+
+###########################
+##### lis_show_parsed #####
+###########################
+
+
+@dp.message(Command("lis_show_parsed"))
+async def show_last_parsed_items(message: Message, state: FSMContext) -> None:
+    tg_id = message.from_user.id
+
+    user_exists = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    if not user_exists:
+        await message.answer(
+            "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
+        )
+        return
+
+    await message.answer(
+        "📄 Сколько последних записей вы хотите увидеть?\n\n"
+        "Введите число, например: <b>5</b>",
+        parse_mode="HTML",
+    )
+
+    await state.set_state(ShowParsedStates.amount_of_records)
+
+
+@dp.message(ShowParsedStates.amount_of_records)
+async def handle_amount_of_records(message: Message, state: FSMContext) -> None:
+    tg_id = message.from_user.id
+    text = message.text.strip()
+
+    if not text.isdigit():
+        await message.answer("❌ Введите число — количество последних записей.")
+        return
+
+    limit = int(text)
+    if limit <= 0:
+        await message.answer("❌ Число должно быть больше нуля.")
+        return
+
+    messages = await get_parsed_items_messages(tg_id=tg_id, limit=limit)
+    for msg in messages:
+        await message.answer(msg, parse_mode="HTML")
+
+    await state.clear()

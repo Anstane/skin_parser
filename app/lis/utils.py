@@ -3,7 +3,9 @@ from datetime import datetime
 from aiogram.types import Message
 
 from app.lis.schemas import ConditionSchema
-from app.lis.constants import USD_TO_RUB
+from app.lis.constants import USD_TO_RUB, MAX_MESSAGE_LENGTH
+
+from app.db import ParsedItems
 
 from app.logger import logger
 
@@ -144,3 +146,34 @@ def format_item_message(item: dict, event: str) -> str:
         f"🧬 Флоат: {float_value}\n"
         f"🎨 Паттерн: {paint_seed}"
     )
+
+
+def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
+    messages = []
+    current_chunk = ""
+
+    for item in parsed_items:
+        item_text = (
+            f"🔹 <b>{item.skin_name}</b>\n"
+            f"🧩 Паттерн: <code>{item.pattern or '—'}</code>\n"
+            f"💧 Флоат: <code>{item.item_float or '—'}</code>\n"
+            f"💰 Цена: <code>{item.price or '—'}</code>\n"
+            f"🕒 Добавлено: <code>{item.created_at_lis.strftime('%Y-%m-%d %H:%M') if item.created_at_lis else '—'}</code>\n"
+        )
+
+        if item.unlock_at_lis:
+            item_text += f"🔓 Разблокировка: <code>{item.unlock_at_lis.strftime('%Y-%m-%d %H:%M')}</code>\n"
+
+        item_text += f"📅 Событие: <code>{item.event}</code>\n\n"
+
+        if len(current_chunk) + len(item_text) > MAX_MESSAGE_LENGTH:
+            messages.append(current_chunk.strip())
+            current_chunk = item_text
+
+        else:
+            current_chunk += item_text
+
+    if current_chunk:
+        messages.append(current_chunk.strip())
+
+    return messages

@@ -91,18 +91,6 @@ async def add_item_to_parse(
     )
 
     async for session in db_helper.get_async_session():
-        # stmt = select(SkinToParse).where(
-        #     SkinToParse.tg_id == tg_id,
-        #     SkinToParse.skin_name == skin_name,
-        # )
-        # existed_item = await session.scalar(statement=stmt)
-
-        # if existed_item:
-        #     return (
-        #         False,
-        #         "❗ Такой предмет уже есть в списке для парсинга. Укажите название повторно.",
-        #     )
-
         item = SkinToParse(
             tg_id=tg_id,
             skin_name=skin_name,
@@ -144,7 +132,7 @@ async def get_all_active_parse_models() -> list[ActiveParse]:
 
 
 async def create_record_about_parsed_skin(
-    tg_id: str,
+    tg_id: int,
     item_data: dict,
     event: str,
 ) -> ParsedItems:
@@ -165,3 +153,16 @@ async def create_record_about_parsed_skin(
         await session.commit(new_item)
 
         return new_item
+
+
+async def get_last_parsed_items(tg_id: int, limit: int) -> list[ParsedItems]:
+    async for session in db_helper.get_async_session():
+        stmt = (
+            select(ParsedItems)
+            .where(ParsedItems.tg_id == tg_id)
+            .order_by(ParsedItems.created_at_lis.desc())
+            .limit(limit)
+        )
+
+        result = await session.execute(statement=stmt)
+        return result.scalars().all()
