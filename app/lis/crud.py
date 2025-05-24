@@ -150,7 +150,7 @@ async def create_record_about_parsed_skin(
         )
 
         session.add(new_item)
-        await session.commit(new_item)
+        await session.commit()
 
         return new_item
 
