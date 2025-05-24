@@ -153,16 +153,30 @@ def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
     current_chunk = ""
 
     for item in parsed_items:
+        if isinstance(item.created_at_lis, datetime):
+            created_at = item.created_at_lis.strftime("%Y-%m-%d %H:%M")
+        elif isinstance(item.created_at_lis, str) and item.created_at_lis.strip():
+            created_at = item.created_at_lis
+        else:
+            created_at = "—"
+
+        if isinstance(item.unlock_at_lis, datetime):
+            unlock_at = item.unlock_at_lis.strftime("%Y-%m-%d %H:%M")
+        elif isinstance(item.unlock_at_lis, str) and item.unlock_at_lis.strip():
+            unlock_at = item.unlock_at_lis
+        else:
+            unlock_at = None
+
         item_text = (
             f"🔹 <b>{item.skin_name}</b>\n"
             f"🧩 Паттерн: <code>{item.pattern or '—'}</code>\n"
             f"💧 Флоат: <code>{item.item_float or '—'}</code>\n"
             f"💰 Цена: <code>{item.price or '—'}</code>\n"
-            f"🕒 Добавлено: <code>{item.created_at_lis.strftime('%Y-%m-%d %H:%M') if item.created_at_lis else '—'}</code>\n"
+            f"🕒 Добавлено: <code>{created_at}</code>\n"
         )
 
-        if item.unlock_at_lis:
-            item_text += f"🔓 Разблокировка: <code>{item.unlock_at_lis.strftime('%Y-%m-%d %H:%M')}</code>\n"
+        if unlock_at:
+            item_text += f"🔓 Разблокировка: <code>{unlock_at}</code>\n"
 
         item_text += f"📅 Событие: <code>{item.event}</code>\n\n"
 
