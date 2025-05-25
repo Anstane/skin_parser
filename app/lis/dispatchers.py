@@ -691,7 +691,7 @@ async def buy_skin_dispatcher(message: Message, state: FSMContext) -> None:
     await state.set_state(BuyItemStates.id_of_item)
 
 
-@dp.message(AuthStates.waiting_for_item_id)
+@dp.message(BuyItemStates.id_of_item)
 async def process_item_id(message: Message, state: FSMContext) -> None:
     item_id = message.text.strip()
 
