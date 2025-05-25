@@ -1,4 +1,5 @@
 from sqlalchemy import select, insert, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.lis.schemas import ItemConditionsSchema, ConditionSchema
 
@@ -12,14 +13,36 @@ async def check_exist_user_or_not(tg_id: int) -> AuthLis | None:
         return await session.scalar(statement=stmt)
 
 
-async def add_lis_auth(user_id: int, token: str) -> AuthLis:
+async def add_lis_auth(
+    user_id: int,
+    token: str,
+    steam_partner: str | None = None,
+    steam_token: str | None = None,
+) -> AuthLis:
     async for session in db_helper.get_async_session():
-        new_auth = AuthLis(tg_id=user_id, lis_token=token)
+        stmt = (
+            pg_insert(AuthLis)
+            .values(
+                tg_id=user_id,
+                lis_token=token,
+                steam_partner=steam_partner,
+                steam_token=steam_token,
+            )
+            .on_conflict_do_update(
+                index_elements=[AuthLis.tg_id],
+                set_={
+                    "lis_token": token,
+                    "steam_partner": steam_partner,
+                    "steam_token": steam_token,
+                },
+            )
+            .returning(AuthLis)
+        )
 
-        session.add(new_auth)
+        result = await session.execute(statement=stmt)
         await session.commit()
 
-        return new_auth
+        return result.scalar_one()
 
 
 async def get_user_parse_model(tg_id: int) -> ActiveParse | None:

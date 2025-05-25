@@ -3,6 +3,9 @@ from aiogram.fsm.state import StatesGroup, State
 
 class AuthStates(StatesGroup):
     waiting_for_token = State()
+    confirm_overwrite = State()
+    confirm_trade_url_add = State()
+    waiting_for_trade_url = State()
 
 
 class SearchForSkinStates(StatesGroup):
@@ -27,3 +30,7 @@ class ParseStates(StatesGroup):
 
 class ShowParsedStates(StatesGroup):
     amount_of_records = State()
+
+
+class BuyItemStates(StatesGroup):
+    id_of_item = State()

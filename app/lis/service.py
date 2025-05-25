@@ -16,7 +16,7 @@ from app.lis import constants
 from app.config import settings
 from app.logger import logger
 
-from app.db import ParsedItems
+from app.db import ParsedItems, AuthLis
 
 
 async def get_user_balance(lis_token: str) -> dict:
@@ -199,3 +199,49 @@ async def get_parsed_items_messages(tg_id: int, limit: int) -> list[str]:
         return ["🔍 Записи не найдены."]
 
     return foramt_message(parsed_items=parsed_items)
+
+
+async def buy_skin(tg_id: int, item_id: int):
+    user_model = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    return await send_request_for_buy_skin(user_model=user_model, item_id=item_id)
+
+
+async def send_request_for_buy_skin(user_model: AuthLis, item_id: int) -> dict:
+    url = "https://api.lis-skins.com/v1/market/buy"
+
+    headers = {
+        "Authorization": f"Bearer {user_model.lis_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    payload = {
+        "ids": [item_id],
+        "partner": user_model.steam_partner,
+        "token": user_model.steam_token,
+    }
+
+    async with httpx.AsyncClient() as http_client:
+        try:
+            response = await http_client.post(
+                url=url,
+                headers=headers,
+                json=payload,
+            )
+
+            response.raise_for_status()
+            return response.json()
+
+        except httpx.HTTPStatusError as e:
+            return {
+                "error": True,
+                "status": e.response.status_code,
+                "detail": e.response.text,
+            }
+
+        except Exception as e:
+            return {
+                "error": True,
+                "detail": str(e),
+            }

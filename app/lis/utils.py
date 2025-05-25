@@ -119,6 +119,7 @@ def format_item_message(item: dict, event: str) -> str:
     created_at = format_date(item.get("created_at", "—"))
     float_value = item.get("item_float", "—")
     paint_seed = item.get("item_paint_seed", "—")
+    item_id = item.get("id", "—")
 
     title_map = {
         "obtained_skin_added": "💎 <b>Найден новый скин!</b>",
@@ -140,6 +141,7 @@ def format_item_message(item: dict, event: str) -> str:
     return (
         f"{title_map.get(event, '')}\n\n"
         f"🎯 <b>{name}</b>\n"
+        f"🆔 ID: <b>{item_id}</b>\n"
         f"💰 {price_label}: <b>{price_display}</b>\n"
         f"🔓 Разблокировка: {unlock_at}\n"
         f"🕓 {date_label}: {created_at}\n"

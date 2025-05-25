@@ -13,3 +13,5 @@ class AuthLis(Base):
     )
     tg_id: Mapped[int] = mapped_column(unique=True)
     lis_token: Mapped[str]
+    steam_token: Mapped[str | None]
+    steam_partner: Mapped[str | None]

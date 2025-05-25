@@ -1,4 +1,5 @@
 import json
+import urllib.parse
 
 from aiogram import Dispatcher
 from aiogram.types import Message
@@ -17,6 +18,7 @@ from app.lis.states import (
     SearchForSkinStates,
     ParseStates,
     ShowParsedStates,
+    BuyItemStates,
 )
 from app.lis.constants import (
     SKIN_NAME_INPUT_PROMPT,
@@ -26,6 +28,7 @@ from app.lis.service import (
     get_user_balance,
     send_request_for_skins,
     get_parsed_items_messages,
+    buy_skin,
 )
 from app.lis.factory import (
     handle_start_parse,
@@ -49,25 +52,88 @@ async def handle_lis_auth(message: Message, state: FSMContext) -> None:
     user_exists = await lis_crud.check_exist_user_or_not(tg_id=user_id)
 
     if user_exists:
-        await message.answer("✅ Вы уже зарегистрированы.")
+        await state.update_data(user_id=user_id)
+        await message.answer(
+            "⚠️ Аккаунт уже зарегистрирован.\n" "Хотите перезаписать токен и данные?",
+            reply_markup=yes_no_kb,
+        )
+        await state.set_state(AuthStates.confirm_overwrite)
 
     else:
         await message.answer("🔑 Отправьте, пожалуйста, ваш LIS токен.")
         await state.set_state(AuthStates.waiting_for_token)
 
 
+@dp.message(AuthStates.confirm_overwrite)
+async def handle_overwrite_decision(message: Message, state: FSMContext) -> None:
+    decision = message.text.lower()
+
+    if decision == "✅ Да":
+        await message.answer("🔑 Пожалуйста, отправьте новый LIS токен.")
+        await state.set_state(AuthStates.waiting_for_token)
+
+    else:
+        await message.answer("❌ Операция отменена.")
+        await state.clear()
+
+
 @dp.message(AuthStates.waiting_for_token)
 async def process_token(message: Message, state: FSMContext) -> None:
     token = message.text
-    user_id = message.from_user.id
-    auth_model = await lis_crud.add_lis_auth(user_id=user_id, token=token)
+    await state.update_data(token=token, user_id=message.from_user.id)
 
-    if auth_model:
-        await message.answer("✅ Вы успешно зарегистрированы.")
+    await message.answer(
+        "✅ Токен получен.\n" "🔗 Хотите ли вы указать trade URL для покупок?",
+        reply_markup=yes_no_kb,
+    )
+    await state.set_state(AuthStates.confirm_trade_url_add)
+
+
+@dp.message(AuthStates.confirm_trade_url_add)
+async def confirm_trade_url(message: Message, state: FSMContext) -> None:
+    decision = message.text.lower()
+
+    if decision == "✅ Да":
+        await message.answer(
+            "🔗 Пожалуйста, отправьте ваш Steam Trade URL.\n"
+            "Пример: https://steamcommunity.com/tradeoffer/new/?partner=12345678&token=abcdEfG"
+        )
+        await state.set_state(AuthStates.waiting_for_trade_url)
 
     else:
-        await message.answer("❌ Произошла ошибка в ходе регистрации!")
+        data = await state.get_data()
 
+        await lis_crud.add_lis_auth(user_id=data["user_id"], token=data["token"])
+
+        await message.answer("✅ Вы успешно зарегистрированы без trade URL.")
+        await state.clear()
+
+
+@dp.message(AuthStates.waiting_for_trade_url)
+async def process_trade_url(message: Message, state: FSMContext) -> None:
+    url = message.text
+    parsed = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qs(parsed.query)
+
+    partner = query.get("partner", [None])[0]
+    token = query.get("token", [None])[0]
+
+    if not partner or not token:
+        await message.answer(
+            "❌ Неверный формат ссылки. Убедитесь, что вы отправили корректный Trade URL."
+        )
+        return
+
+    data = await state.get_data()
+
+    await lis_crud.add_lis_auth(
+        user_id=data["user_id"],
+        token=data["token"],
+        steam_partner=partner,
+        steam_token=token,
+    )
+
+    await message.answer("✅ Вы успешно зарегистрированы с указанным Trade URL.")
     await state.clear()
 
 
@@ -590,5 +656,73 @@ async def handle_amount_of_records(message: Message, state: FSMContext) -> None:
     messages = await get_parsed_items_messages(tg_id=tg_id, limit=limit)
     for msg in messages:
         await message.answer(msg, parse_mode="HTML")
+
+    await state.clear()
+
+
+########################
+##### lis_buy_skin #####
+########################
+
+
+@dp.message(Command("lis_buy_skin"))
+async def buy_skin_dispatcher(message: Message, state: FSMContext) -> None:
+    tg_id = message.from_user.id
+
+    user_exists = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    if not user_exists:
+        await message.answer(
+            "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
+        )
+        return
+
+    if not user_exists.steam_token or not user_exists.steam_partner:
+        await message.answer(
+            "⚠️ Ваш LIS токен сохранён, но отсутствуют данные для покупок (Steam Trade URL).\n"
+            "Чтобы их добавить, используйте /lis_auth и укажите Trade URL."
+        )
+        return
+
+    await state.update_data(tg_id=tg_id)
+    await message.answer(
+        "🆔 Пожалуйста, отправьте ID предмета, который вы хотите купить."
+    )
+    await state.set_state(BuyItemStates.id_of_item)
+
+
+@dp.message(AuthStates.waiting_for_item_id)
+async def process_item_id(message: Message, state: FSMContext) -> None:
+    item_id = message.text.strip()
+
+    if not item_id.isdigit():
+        await message.answer("❌ Пожалуйста, введите корректный числовой ID предмета.")
+        return
+
+    data = await state.get_data()
+    tg_id = data.get("tg_id") or message.from_user.id
+
+    result = await buy_skin(tg_id=tg_id, item_id=int(item_id))
+
+    if result.get("error"):
+        await message.answer(
+            f"❌ Ошибка при покупке:\n{result.get('detail') or 'Неизвестная ошибка.'}"
+        )
+
+    else:
+        purchase_info = result.get("data", {})
+        skins = purchase_info.get("skins", [])
+
+        if skins:
+            skin = skins[0]
+            await message.answer(
+                f"✅ Покупка успешно выполнена!\n"
+                f"🎯 Предмет: {skin.get('name')}\n"
+                f"💵 Цена: {skin.get('price')} $\n"
+                f"📦 Статус: {skin.get('status')}"
+            )
+
+        else:
+            await message.answer("✅ Покупка выполнена, но нет данных о предмете.")
 
     await state.clear()
