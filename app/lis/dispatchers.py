@@ -66,7 +66,7 @@ async def handle_lis_auth(message: Message, state: FSMContext) -> None:
 
 @dp.message(AuthStates.confirm_overwrite)
 async def handle_overwrite_decision(message: Message, state: FSMContext) -> None:
-    decision = message.text.lower()
+    decision = message.text.strip()
 
     if decision == "✅ Да":
         await message.answer("🔑 Пожалуйста, отправьте новый LIS токен.")
@@ -91,7 +91,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
 
 @dp.message(AuthStates.confirm_trade_url_add)
 async def confirm_trade_url(message: Message, state: FSMContext) -> None:
-    decision = message.text.lower()
+    decision = message.text.strip()
 
     if decision == "✅ Да":
         await message.answer(
