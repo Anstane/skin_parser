@@ -54,7 +54,7 @@ async def handle_lis_auth(message: Message, state: FSMContext) -> None:
     if user_exists:
         await state.update_data(user_id=user_id)
         await message.answer(
-            "⚠️ Аккаунт уже зарегистрирован.\n" "Хотите перезаписать токен и данные?",
+            "⚠️ Аккаунт уже зарегистрирован.\n\n" "Хотите перезаписать токен и данные?",
             reply_markup=yes_no_kb,
         )
         await state.set_state(AuthStates.confirm_overwrite)
@@ -83,7 +83,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
     await state.update_data(token=token, user_id=message.from_user.id)
 
     await message.answer(
-        "✅ Токен получен.\n" "🔗 Хотите ли вы указать trade URL для покупок?",
+        "✅ Токен получен.\n\n" "🔗 Хотите ли вы указать Trade URL для покупок?",
         reply_markup=yes_no_kb,
     )
     await state.set_state(AuthStates.confirm_trade_url_add)
@@ -95,7 +95,7 @@ async def confirm_trade_url(message: Message, state: FSMContext) -> None:
 
     if decision == "✅ Да":
         await message.answer(
-            "🔗 Пожалуйста, отправьте ваш Steam Trade URL.\n"
+            "🔗 Пожалуйста, отправьте ваш Steam Trade URL.\n\n"
             "Пример: https://steamcommunity.com/tradeoffer/new/?partner=12345678&token=abcdEfG"
         )
         await state.set_state(AuthStates.waiting_for_trade_url)
