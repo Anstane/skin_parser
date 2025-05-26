@@ -294,7 +294,7 @@ async def send_request_to_check_availability(user_model: AuthLis, item_id: int) 
         "Accept": "application/json",
     }
 
-    params = {"ids": [item_id]}
+    params = {"ids[]": [item_id]}
 
     async with httpx.AsyncClient() as http_client:
         response = await http_client.get(url=url, headers=headers, params=params)
