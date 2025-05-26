@@ -19,6 +19,7 @@ from app.lis.states import (
     ParseStates,
     ShowParsedStates,
     BuyItemStates,
+    CheckAvailabilityStates,
 )
 from app.lis.constants import (
     SKIN_NAME_INPUT_PROMPT,
@@ -29,6 +30,7 @@ from app.lis.service import (
     send_request_for_skins,
     get_parsed_items_messages,
     buy_skin,
+    check_availability_service,
 )
 from app.lis.factory import (
     handle_start_parse,
@@ -704,7 +706,16 @@ async def process_item_id(message: Message, state: FSMContext) -> None:
 
     result = await buy_skin(tg_id=tg_id, item_id=int(item_id))
 
-    if result.get("error"):
+    if result.get("error") == "insufficient_funds":
+        await message.answer("❌ Недостаточно средств для покупки.")
+
+    elif result.get("error") == "skins_unavailable":
+        unavailable_ids = result.get("unavailable_ids", [])
+        await message.answer(
+            f"❌ Некоторые предметы недоступны к покупке: {unavailable_ids}"
+        )
+
+    elif result.get("error"):
         await message.answer(
             f"❌ Ошибка при покупке:\n{result.get('detail') or 'Неизвестная ошибка.'}"
         )
@@ -724,5 +735,47 @@ async def process_item_id(message: Message, state: FSMContext) -> None:
 
         else:
             await message.answer("✅ Покупка выполнена, но нет данных о предмете.")
+
+    await state.clear()
+
+
+##################################
+##### lis_check_availability #####
+##################################
+
+
+@dp.message(Command("lis_check_availability"))
+async def check_skin_availability(message: Message, state: FSMContext) -> None:
+    tg_id = message.from_user.id
+
+    user_exists = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    if not user_exists:
+        await message.answer(
+            "🔒 Вы ещё не авторизованы. Используйте команду /lis_auth."
+        )
+        return
+
+    await state.update_data(tg_id=tg_id)
+    await message.answer(
+        "🆔 Отправьте ID скина, доступность которого хотите проверить."
+    )
+    await state.set_state(CheckAvailabilityStates.id_of_item)
+
+
+@dp.message(CheckAvailabilityStates.id_of_item)
+async def process_check_of_availability(message: Message, state: FSMContext) -> None:
+    item_id = message.text.strip()
+
+    if not item_id.isdigit():
+        await message.answer("❌ Пожалуйста, введите корректный числовой ID предмета.")
+        return
+
+    data = await state.get_data()
+    tg_id = data.get("tg_id") or message.from_user.id
+
+    response_text = await check_availability_service(tg_id=tg_id, item_id=int(item_id))
+
+    await message.answer(response_text)
 
     await state.clear()

@@ -34,3 +34,7 @@ class ShowParsedStates(StatesGroup):
 
 class BuyItemStates(StatesGroup):
     id_of_item = State()
+
+
+class CheckAvailabilityStates(StatesGroup):
+    id_of_item = State()

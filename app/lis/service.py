@@ -4,6 +4,7 @@ import asyncio
 import httpx
 import websockets
 
+from app.lis.constants import USD_TO_RUB
 from app.lis.schemas import ItemConditionsSchema
 from app.lis.utils import (
     check_item_against_conditions,
@@ -15,6 +16,7 @@ from app.lis import constants
 
 from app.config import settings
 from app.logger import logger
+
 
 from app.db import ParsedItems, AuthLis
 
@@ -245,3 +247,56 @@ async def send_request_for_buy_skin(user_model: AuthLis, item_id: int) -> dict:
                 "error": True,
                 "detail": str(e),
             }
+
+
+async def check_availability_service(tg_id: int, item_id: int) -> str:
+    user_model = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
+
+    result = await send_request_to_check_availability(
+        user_model=user_model, item_id=item_id
+    )
+
+    availability_data = result.get("data", {})
+    available_skins = availability_data.get("available_skins", {})
+    unavailable_ids = availability_data.get("unavailable_skin_ids", [])
+
+    if str(item_id) in available_skins:
+        price = available_skins[str(item_id)]
+
+        try:
+            price_float = float(price)
+            price_rub = round(price_float * USD_TO_RUB)
+            price_display = f"{price_float:.2f} $ ({price_rub} ₽)"
+
+        except (ValueError, TypeError):
+            price_display = f"{price} $"
+
+        return (
+            f"✅ Скин с ID {item_id} доступен к покупке.\n" f"💵 Цена: {price_display}"
+        )
+
+    elif int(item_id) in unavailable_ids:
+        return f"❌ Скин с ID {item_id} недоступен для покупки."
+
+    else:
+        return (
+            f"⚠️ Не удалось определить статус скина с ID {item_id}. "
+            f"Возможно, он не существует или произошла ошибка. Попробуйте позже."
+        )
+
+
+async def send_request_to_check_availability(user_model: AuthLis, item_id: int) -> dict:
+    url = "https://api.lis-skins.com/v1/market/check-availability"
+
+    headers = {
+        "Authorization": f"Bearer {user_model.lis_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    params = {"ids": [item_id]}
+
+    async with httpx.AsyncClient() as http_client:
+        response = await http_client.get(url=url, headers=headers, params=params)
+
+        return response.json()
