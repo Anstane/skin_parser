@@ -53,7 +53,7 @@ async def send_first_skins(message: Message, skins: list) -> None:
 
 def check_item_against_conditions(
     item: dict, conditions: list[ConditionSchema]
-) -> bool:
+) -> tuple[bool, bool]:
     item_name = item.get("name")
     item_float = item.get("item_float")
     item_pattern = str(item.get("item_paint_seed"))
@@ -62,6 +62,8 @@ def check_item_against_conditions(
     for cond in conditions:
         if cond.skin_name != item_name:
             continue
+
+        pattern_matched = False
 
         if cond.float_condition:
             try:
@@ -83,6 +85,8 @@ def check_item_against_conditions(
             if item_pattern not in cond.patterns:
                 continue
 
+            pattern_matched = True
+
         if cond.price_condition:
             try:
                 if ">" in cond.price_condition:
@@ -99,9 +103,9 @@ def check_item_against_conditions(
                 logger.error(f"⚠️ Некорректное price_condition: {cond.price_condition}")
                 continue
 
-        return True
+        return True, pattern_matched
 
-    return False
+    return False, False
 
 
 def format_date(date_str: str) -> str:
@@ -112,7 +116,7 @@ def format_date(date_str: str) -> str:
         return date_str
 
 
-def format_item_message(item: dict, event: str) -> str:
+def format_item_message(item: dict, event: str, highlight_pattern: bool = False) -> str:
     name = item.get("name", "Без названия")
     price = item.get("price", "?")
     unlock_at = format_date(item.get("unlock_at", "—"))
@@ -138,6 +142,8 @@ def format_item_message(item: dict, event: str) -> str:
     except (ValueError, TypeError):
         pass
 
+    pattern_note = "\n🎨 <b>Совпадение по паттерну!</b>" if highlight_pattern else ""
+
     return (
         f"{title_map.get(event, '')}\n\n"
         f"🎯 <b>{name}</b>\n"
@@ -147,6 +153,7 @@ def format_item_message(item: dict, event: str) -> str:
         f"🕓 {date_label}: {created_at}\n"
         f"🧬 Флоат: {float_value}\n"
         f"🎨 Паттерн: {paint_seed}"
+        f"{pattern_note}"
     )
 
 

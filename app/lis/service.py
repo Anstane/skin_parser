@@ -110,7 +110,11 @@ async def run_node_listener(
                     if not item_data:
                         continue
 
-                    if check_item_against_conditions(item_data, conditions.items):
+                    match, pattern_matched = check_item_against_conditions(
+                        item_data, conditions.items
+                    )
+
+                    if match:
                         event = item_data.get("event")
 
                         if event in {
@@ -118,7 +122,9 @@ async def run_node_listener(
                             "obtained_skin_price_changed",
                         }:
                             formatted_message = format_item_message(
-                                item=item_data, event=event
+                                item=item_data,
+                                event=event,
+                                highlight_pattern=pattern_matched,
                             )
 
                             await create_record_about_founded_item(
