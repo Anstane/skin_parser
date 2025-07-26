@@ -106,6 +106,7 @@ async def get_conditions_for_user(tg_id: int) -> ItemConditionsSchema:
 async def add_item_to_parse(
     tg_id: int,
     skin_name: str,
+    autobuy: bool,
     patterns: list[str],
     price: str | None = None,
     float: str | None = None,
@@ -118,6 +119,7 @@ async def add_item_to_parse(
         item = SkinToParse(
             tg_id=tg_id,
             skin_name=skin_name,
+            ready_to_buy=autobuy,
             patterns=patterns_str,
             float=float,
             price=price,

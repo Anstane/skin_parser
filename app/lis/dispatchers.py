@@ -458,6 +458,7 @@ async def on_item_patterns(message: Message, state: FSMContext):
     success, response_msg = await lis_crud.add_item_to_parse(
         tg_id=message.from_user.id,
         skin_name=data["skin_name"],
+        autobuy=data["ready_to_buy"],
         price=data["price"],
         float=data["float"],
         patterns=patterns,
