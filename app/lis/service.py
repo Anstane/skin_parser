@@ -110,8 +110,8 @@ async def run_node_listener(
                     if not item_data:
                         continue
 
-                    match, pattern_matched = check_item_against_conditions(
-                        item_data, conditions.items
+                    match, ready_to_buy, pattern_matched = (
+                        check_item_against_conditions(item_data, conditions.items)
                     )
 
                     if match:
@@ -121,16 +121,25 @@ async def run_node_listener(
                             "obtained_skin_added",
                             "obtained_skin_price_changed",
                         }:
+                            bought_result = None
+
+                            if ready_to_buy:
+                                bought_result = await buy_skin(
+                                    tg_id=tg_id, item_id=item_data["id"]
+                                )
+
                             formatted_message = format_item_message(
                                 item=item_data,
                                 event=event,
                                 highlight_pattern=pattern_matched,
+                                bought_result=bought_result,
                             )
 
                             await create_record_about_founded_item(
                                 tg_id=tg_id,
                                 item_data=item_data,
                                 event=event,
+                                bought_result=bought_result,
                             )
 
                             await send_telegram_message(
@@ -190,11 +199,13 @@ async def create_record_about_founded_item(
     tg_id: int,
     item_data: dict,
     event: str,
+    bought_result: dict | None = None,
 ) -> ParsedItems:
     return await lis_crud.create_record_about_parsed_skin(
         tg_id=tg_id,
         item_data=item_data,
         event=event,
+        bought_result=bought_result,
     )
 
 

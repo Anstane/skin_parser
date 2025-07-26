@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -22,3 +20,4 @@ class ParsedItems(Base):
     created_at_lis: Mapped[str | None]
     unlock_at_lis: Mapped[str | None]
     event: Mapped[str]
+    bought_result: Mapped[bool | None]

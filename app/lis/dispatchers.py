@@ -496,6 +496,7 @@ async def handle_active_parse_action(message: Message, state: FSMContext):
             f"{f' | Паттерны: {item.patterns}' if item.patterns else ''}"
             f"{f' | Флоат: {item.float}' if item.float else ''}"
             f"{f' | Ценник: {item.price}$' if item.price else ''}"
+            f" | {'✅ Автопокупка' if item.ready_to_buy else '❌ Без автопокупки'}"
             for item in existed_items
         )
 
@@ -514,6 +515,7 @@ async def handle_active_parse_action(message: Message, state: FSMContext):
             f"{f' | Паттерны: {item.patterns}' if item.patterns else ''}"
             f"{f' | Флоат: {item.float}' if item.float else ''}"
             f"{f' | Ценник: {item.price}$' if item.price else ''}"
+            f" | {'✅ Автопокупка' if item.ready_to_buy else '❌ Без автопокупки'}"
             for item in existed_items
         )
 

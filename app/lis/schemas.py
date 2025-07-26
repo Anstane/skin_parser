@@ -6,6 +6,7 @@ class ConditionSchema(BaseModel):
     patterns: list[str] | None = None
     float_condition: str | None = None
     price_condition: str | None = None
+    ready_to_buy: bool = False
 
 
 class ItemConditionsSchema(BaseModel):

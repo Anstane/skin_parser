@@ -53,7 +53,7 @@ async def send_first_skins(message: Message, skins: list) -> None:
 
 def check_item_against_conditions(
     item: dict, conditions: list[ConditionSchema]
-) -> tuple[bool, bool]:
+) -> tuple[bool, bool, bool]:
     item_name = item.get("name")
     item_float = item.get("item_float")
     item_pattern = str(item.get("item_paint_seed"))
@@ -103,9 +103,12 @@ def check_item_against_conditions(
                 logger.error(f"⚠️ Некорректное price_condition: {cond.price_condition}")
                 continue
 
-        return True, pattern_matched
+        if cond.ready_to_buy:
+            return True, True, pattern_matched
 
-    return False, False
+        return True, False, pattern_matched
+
+    return False, False, False
 
 
 def format_date(date_str: str) -> str:
@@ -116,7 +119,12 @@ def format_date(date_str: str) -> str:
         return date_str
 
 
-def format_item_message(item: dict, event: str, highlight_pattern: bool = False) -> str:
+def format_item_message(
+    item: dict,
+    event: str,
+    highlight_pattern: bool = False,
+    bought_result: dict | None = None,
+) -> str:
     name = item.get("name", "Без названия")
     price = item.get("price", "?")
     unlock_at = format_date(item.get("unlock_at", "—"))
@@ -144,6 +152,17 @@ def format_item_message(item: dict, event: str, highlight_pattern: bool = False)
 
     pattern_note = "\n🎨 <b>Совпадение по паттерну!</b>" if highlight_pattern else ""
 
+    purchase_note = ""
+    if bought_result:
+        if "error" in bought_result:
+            purchase_note = f"\n❌ <b>Не удалось купить:</b> {bought_result['error']}"
+
+        elif "data" in bought_result:
+            skins = bought_result["data"].get("skins", [])
+            if skins:
+                skin_info = skins[0]
+                purchase_note = f"\n✅ <b>Скин куплен!</b> (ID покупки: {bought_result['data'].get('purchase_id')})"
+
     return (
         f"{title_map.get(event, '')}\n\n"
         f"🎯 <b>{name}</b>\n"
@@ -154,6 +173,7 @@ def format_item_message(item: dict, event: str, highlight_pattern: bool = False)
         f"🧬 Флоат: {float_value}\n"
         f"🎨 Паттерн: {paint_seed}"
         f"{pattern_note}"
+        f"{purchase_note}"
     )
 
 
@@ -182,6 +202,7 @@ def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
             f"🧩 Паттерн: <code>{item.pattern or '—'}</code>\n"
             f"💧 Флоат: <code>{item.item_float or '—'}</code>\n"
             f"💰 Цена: <code>{item.price or '—'}</code>\n"
+            f"🛒 Куплен: <code>{'✅ Да' if item.bought_result else '❌ Нет'}</code>\n"
             f"🕒 Добавлено: <code>{created_at}</code>\n"
         )
 
@@ -193,7 +214,6 @@ def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
         if len(current_chunk) + len(item_text) > MAX_MESSAGE_LENGTH:
             messages.append(current_chunk.strip())
             current_chunk = item_text
-
         else:
             current_chunk += item_text
 

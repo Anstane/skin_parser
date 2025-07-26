@@ -95,6 +95,7 @@ async def get_conditions_for_user(tg_id: int) -> ItemConditionsSchema:
                 patterns=row.patterns.split(",") if row.patterns else [],
                 float_condition=row.float,
                 price_condition=row.price,
+                ready_to_buy=row.ready_to_buy,
             )
             for row in rows
         ]
@@ -158,7 +159,15 @@ async def create_record_about_parsed_skin(
     tg_id: int,
     item_data: dict,
     event: str,
+    bought_result: dict | None = None,
 ) -> ParsedItems:
+    if bought_result:
+        if "error" in bought_result:
+            bought_result = False
+
+        elif "data" in bought_result:
+            bought_result = True
+
     async for session in db_helper.get_async_session():
         new_item = ParsedItems(
             tg_id=tg_id,
@@ -170,6 +179,7 @@ async def create_record_about_parsed_skin(
             unlock_at_lis=item_data["unlock_at"],
             created_at_lis=item_data["created_at"],
             event=event,
+            bought_result=bought_result,
         )
 
         session.add(new_item)

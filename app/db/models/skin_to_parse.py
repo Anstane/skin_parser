@@ -16,3 +16,4 @@ class SkinToParse(Base):
     patterns: Mapped[str | None]
     float: Mapped[str | None]
     price: Mapped[str | None]
+    ready_to_buy: Mapped[bool] = mapped_column(default=False)

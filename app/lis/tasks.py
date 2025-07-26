@@ -8,6 +8,7 @@ from app.lis.service import (
     active_websockets,
 )
 from app.lis.schemas import ItemConditionsSchema
+from app.lis.factory import handle_start_parse
 from app.lis import crud as lis_crud
 
 from app.logger import logger
@@ -90,11 +91,14 @@ async def watchdog_for_user(tg_id: int, check_interval: int = 30):
         task = active_listeners.get(tg_id)
 
         if not task or task.done():
-            await send_telegram_message(tg_id, "⚠️ Парсинг неожиданно остановился.")
+            await send_telegram_message(
+                tg_id, "⚠️ Парсинг неожиданно остановился. Перезапускаем..."
+            )
 
-            await lis_crud.set_parse_status(tg_id=tg_id, active=False)
+            logger.warning(f"⚠️ Парсинг для {tg_id} завершился. Перезапускаем...")
 
-            logger.warning(f"⚠️ Парсинг для {tg_id} завершился или потерян.")
+            await handle_start_parse(tg_id=tg_id)
+
             break
 
 
