@@ -8,7 +8,6 @@ from app.lis.service import (
     active_websockets,
 )
 from app.lis.schemas import ItemConditionsSchema
-from app.lis.utils import handle_start_parse
 from app.lis import crud as lis_crud
 
 from app.logger import logger
