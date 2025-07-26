@@ -23,6 +23,7 @@ class ParseStates(StatesGroup):
     add_item_price = State()
     add_item_float = State()
     add_item_patterns = State()
+    set_autobuy = State()
     confirm_add_another = State()
 
     delete_item_id = State()

@@ -375,6 +375,23 @@ async def on_item_name(message: Message, state: FSMContext):
     await state.update_data(skin_name=skin_name)
 
     await message.answer(
+        "<b>🔁 Включить автопокупку?</b>\n\n<i>Выберите «Да» или «Нет».</i>",
+        reply_markup=yes_no_kb,
+        parse_mode="HTML",
+    )
+
+    await state.set_state(ParseStates.set_autobuy)
+
+
+@dp.message(ParseStates.set_autobuy)
+async def on_item_autobuy(message: Message, state: FSMContext):
+    autobuy_input = message.text.strip().lower()
+
+    ready_to_buy = autobuy_input in {"да", "yes", "✅", "✅ да"}
+
+    await state.update_data(ready_to_buy=ready_to_buy)
+
+    await message.answer(
         "<b>💰 Укажите желаемую цену предмета:</b>\n\n"
         "🧮 <i>Примеры:</i>\n"
         "• <code>&lt;5</code> — дешевле 5$\n"
