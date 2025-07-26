@@ -8,7 +8,7 @@ from app.lis.service import (
     active_websockets,
 )
 from app.lis.schemas import ItemConditionsSchema
-from app.lis.factory import handle_start_parse
+from app.lis.utils import restart_parse_in_tasks
 from app.lis import crud as lis_crud
 
 from app.logger import logger
@@ -97,7 +97,7 @@ async def watchdog_for_user(tg_id: int, check_interval: int = 30):
 
             logger.warning(f"⚠️ Парсинг для {tg_id} завершился. Перезапускаем...")
 
-            await handle_start_parse(tg_id=tg_id)
+            await restart_parse_in_tasks(tg_id=tg_id)
 
             break
 

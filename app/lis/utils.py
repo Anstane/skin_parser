@@ -4,6 +4,7 @@ from aiogram.types import Message
 
 from app.lis.schemas import ConditionSchema
 from app.lis.constants import USD_TO_RUB, MAX_MESSAGE_LENGTH
+from app.lis.factory import handle_start_parse
 
 from app.db import ParsedItems
 
@@ -221,3 +222,7 @@ def foramt_message(parsed_items: list[ParsedItems]) -> list[str]:
         messages.append(current_chunk.strip())
 
     return messages
+
+
+async def restart_parse_in_tasks(tg_id: str) -> None:
+    return await handle_start_parse(tg_id=tg_id)
