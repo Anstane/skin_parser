@@ -155,7 +155,7 @@ def format_item_message(
     purchase_note = ""
     if bought_result:
         if "error" in bought_result:
-            purchase_note = f"\n❌ <b>Не удалось купить:</b> {bought_result['error']}"
+            purchase_note = f"\n❌ <b>Не удалось купить:</b> {bought_result['detail']}"
 
         elif "data" in bought_result:
             skins = bought_result["data"].get("skins", [])
