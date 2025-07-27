@@ -399,6 +399,19 @@ async def on_item_autobuy(message: Message, state: FSMContext):
 
     ready_to_buy = autobuy_input in {"да", "yes", "✅", "✅ да"}
 
+    if ready_to_buy:
+        user = await lis_crud.check_exist_user_or_not(tg_id=message.from_user.id)
+
+        if not user or not user.steam_token or not user.steam_partner:
+            await message.answer(
+                "❌ Вы указали автопокупку, но не привязали Steam.\n\n"
+                "Для автопокупки необходимо указать Steam-токен и partner ID.\n"
+                "Используйте команду /steam_auth для авторизации.",
+                parse_mode="HTML",
+            )
+            await state.clear()
+            return
+
     await state.update_data(ready_to_buy=ready_to_buy)
 
     await message.answer(
