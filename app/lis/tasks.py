@@ -96,6 +96,8 @@ async def watchdog_for_user(tg_id: int, check_interval: int = 30):
 
             logger.warning(f"⚠️ Парсинг для {tg_id} завершился. Перезапускаем...")
 
+            await stop_listener_for_user(tg_id=tg_id)
+
             conditions = await lis_crud.get_conditions_for_user(tg_id=tg_id)
 
             lis_user = await lis_crud.check_exist_user_or_not(tg_id=tg_id)
